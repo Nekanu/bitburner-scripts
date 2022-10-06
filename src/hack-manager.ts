@@ -5,13 +5,11 @@ const weakenScript = "/lib/weaken.js";
 const growScript = "/lib/grow.js";
 const hackScript = "/lib/hack.js";
 
-let monitorServers = new Map<string, number[]>();
+const monitorServers = new Map<string, number[]>();
 
 function determineActionAndNeededRam(ns: NS, target: string): { script: string, neededThreads: number } {
-    const targetMinSecurity = ns.getServerMinSecurityLevel(target);
-
-    if (targetMinSecurity < ns.getServerSecurityLevel(target) * 0.95) {
-        return { script: weakenScript, neededThreads: calculateWeakenThreads(ns, target, targetMinSecurity) };
+    if (ns.getServerMinSecurityLevel(target) < ns.getServerSecurityLevel(target) * 0.95) {
+        return { script: weakenScript, neededThreads: calculateWeakenThreads(ns, target) };
     } else if (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target) * 0.95) {
         return { script: growScript, neededThreads: calculateGrowThreads(ns, target) };
     } else {
@@ -25,40 +23,49 @@ function determineActionAndNeededRam(ns: NS, target: string): { script: string, 
  */
 export async function main(ns: NS) {
     ns.disableLog("ALL");
-    ns.enableLog("exec");
+    // ns.enableLog("exec");
 
-    let hackingLevel = ns.getHackingLevel();
+    let hackingLevel = 0;
 
     let profitableServers = sortServersAfterProfit(ns);
+    let blockedServers: string[] = [];
 
     while (true) {
 
         // Check if any of the running pid's are done and filter
         for (const [server, pids] of monitorServers) {
-            monitorServers.set(server, pids.filter(pid => ns.isRunning(pid)));
 
-            if (monitorServers.get(server)!.length === 0) {
+            if (!ns.isRunning(pids[0], server)) {
+                ns.printf("%s -- %s finished! Resetting blocklist", new Date().toLocaleTimeString(), server);
                 monitorServers.delete(server);
+                blockedServers = [];
             }
         }
 
         if (hackingLevel < ns.getHackingLevel() && hackingLevel < 2000) {
             hackingLevel = ns.getHackingLevel();
-            ns.print("Hacking level increased, starting new escalation");
             ns.exec("escalate.js", "home", 1, "--silent");
-
             profitableServers = sortServersAfterProfit(ns);
         }
 
         for (const [server,] of profitableServers) {
-            if (!monitorServers.has(server)) {
+            if (!monitorServers.has(server) && !blockedServers.includes(server)) {
                 const res = determineActionAndNeededRam(ns, server);
                 const freeRam = getFreeRAM(ns);
-                const neededRam = res.neededThreads * ns.getScriptRam(res.script);
+                const scriptRam = ns.getScriptRam(res.script);
+                const neededRam = res.neededThreads * scriptRam;
+                let availableThreads = 0;
 
-                if (freeRam.totalAmount > neededRam) {
-                    ns.printf("%s -- %s -> %s (%d threads - %d GB RAM)", new Date().toLocaleTimeString(), res.script, server, res.neededThreads, neededRam);
-                    findAndExecuteScriptOnServers(ns, server, res.script, res.neededThreads);
+                for (const [, ram] of freeRam.ramMapping) {
+                    availableThreads += Math.floor(ram / scriptRam);
+                }
+
+                if (availableThreads > 0) {
+                    ns.printf("%s -- %s \t-> %s (%d threads - %d GB) -> %d GB (%d threads)", new Date().toLocaleTimeString(), res.script, server, res.neededThreads, neededRam, freeRam.totalAmount, availableThreads);
+                    let pids = findAndExecuteScriptOnServers(ns, server, res.script, res.neededThreads);
+                    monitorServers.set(server, pids);
+                } else {
+                    blockedServers.push(server);
                 }
             }
         }
@@ -85,7 +92,7 @@ const findFreeScriptRAM: ITraversalFunction = (ns: NS, context: TraversalContext
     return args.neededThreads === 0;
 };
 
-function findAndExecuteScriptOnServers(ns: NS, target: string, script: string, neededThreads: number) {
+function findAndExecuteScriptOnServers(ns: NS, target: string, script: string, neededThreads: number): number[] {
     const threadMap = new Map<string, number>();
 
     new Traversal(findFreeScriptRAM, false, ["home"]).start(ns, "home", { neededThreads: neededThreads, scriptCost: ns.getScriptRam(script), result: threadMap });
@@ -99,16 +106,22 @@ function findAndExecuteScriptOnServers(ns: NS, target: string, script: string, n
         ns.scp(script, server);
         let pid = ns.exec(script, server, threads, target, threads, 0);
         // ns.printf("    %s -> %s threads, PID: %i", server, threads, pid);
-        pids.push(pid);
+        if (pid > 0) {
+            pids.push(pid);
+        }
     }
 
-    monitorServers.set(target, pids);
+    return pids;
 }
 
-function calculateWeakenThreads(ns: NS, target: string, targetMinSecurity: number) {
+function calculateWeakenThreads(ns: NS, target: string) {
     // ns.printf("Performing weaken on %s to %s", target, targetMinSecurity);
-    const targetCurrentSecurity = ns.getServerSecurityLevel(target);
-    return Math.ceil((targetCurrentSecurity - targetMinSecurity) / 0.7);
+    let threads = 1;
+    while (ns.weakenAnalyze(threads) < (ns.getServerSecurityLevel(target) - ns.getServerMinSecurityLevel(target))) {
+        threads++;
+    }
+
+    return threads;
 }
 
 function calculateGrowThreads(ns: NS, target: string) {
