@@ -69,19 +69,16 @@ async function determinePurchase(ns: NS) {
             const node = nodesToUpgrade[i];
             const index = nodes.indexOf(node);
             if (node.level < minimumNode.level) {
-                if (await tryLevelUpgrade(ns, index, node)) {
-                    return;
-                }
+                await tryLevelUpgrade(ns, index, node)
+                return;
             }
             if (node.ram < minimumNode.ram) {
-                if (await tryRamUpgrade(ns, index, node)) {
-                    return;
-                }
+                await tryRamUpgrade(ns, index, node);
+                return;
             }
             if (node.cores < minimumNode.cores) {
-                if (await tryCoreUpgrade(ns, index, node)) {
-                    return;
-                }
+                await tryCoreUpgrade(ns, index, node)
+                return;
             }
         }
     }
