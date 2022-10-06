@@ -1,4 +1,4 @@
-import { NS } from "./Netscript";
+import { NS } from "types/netscript";
 
 export interface ITraversalFunction extends Function {
     (ns: NS, traversalContext: TraversalContext, args?: any): void;
@@ -52,4 +52,26 @@ export class Traversal {
             }
         });
     }
+}
+
+export function getFreeRAM(ns: NS) {
+
+    const result = {
+        totalAmount: 0,
+        ramMapping: new Map<string, number>()
+    };
+
+    new Traversal((ns: NS, context: TraversalContext, args: { totalAmount: number, ramMapping: Map<string, number> }) => {
+        const server = context.hostname;
+
+        if (!ns.hasRootAccess(server)) return;
+
+        const freeRAM = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
+
+        args.totalAmount += freeRAM;
+        args.ramMapping.set(server, freeRAM);
+    }, false, ["home"])
+        .start(ns, "home", result);
+
+    return result;
 }

@@ -1,5 +1,5 @@
-import { NS } from "types/Netscript";
-import { Traversal, ITraversalFunction, TraversalContext } from "types/Traversal";
+import { NS } from "./types/netscript";
+import { Traversal, ITraversalFunction, TraversalContext } from "./types/traversal";
 
 const killScripts: ITraversalFunction = (ns: NS, traversalContext: TraversalContext) => {
     const hostname = traversalContext.hostname;
@@ -8,9 +8,7 @@ const killScripts: ITraversalFunction = (ns: NS, traversalContext: TraversalCont
         return;
     }
 
-    if (hostname != "home") {
-        ns.killall(hostname);
-    }
+    ns.killall(hostname, true);
 };
 
 /** @param {NS} ns */

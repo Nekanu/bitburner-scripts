@@ -4,10 +4,9 @@
     ],
     "compilerOptions": {
         /* Basic Options */
-        "target": "es2018",
-        "module": "esNext",
+        "target": "ES2019",
         "lib": [
-            "esnext",
+            "ES2019",
             "dom"
         ],
         "checkJs": false,

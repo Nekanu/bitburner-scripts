@@ -7,6 +7,6 @@ import { NS } from "types/netscript";
  * @arg {number} delay
  */
 export async function main(ns: NS) {
-    await ns.sleep(ns.args[2] as number || 0);
-    await ns.hack(ns.args[0] as string, { threads: ns.args[1] as number, stock: true });
+    await ns.sleep(ns.args[2] as number);
+    await ns.grow(ns.args[0] as string, { threads: ns.args[1] as number, stock: true });
 }

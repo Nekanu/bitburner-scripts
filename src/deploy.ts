@@ -1,5 +1,5 @@
-import { NS, ScriptArg } from "types/Netscript";
-import { ITraversalFunction, Traversal, TraversalContext } from "types/Traversal";
+import { NS, ScriptArg } from "types/netscript";
+import { ITraversalFunction, Traversal, TraversalContext } from "types/traversal";
 
 var scriptFlags: { [key: string]: string[] | ScriptArg };
 
@@ -10,20 +10,30 @@ const findServerWithMostMoney: ITraversalFunction = (ns: NS, context: TraversalC
     }
 };
 
-const deployOnServer: ITraversalFunction = (ns: NS, traversalContext: TraversalContext, args: { target: string, script: string }) => {
+const deployOnServer: ITraversalFunction = (ns: NS, traversalContext: TraversalContext, args: { target: string, script: string, minSecurity: number, maxMoney: number }) => {
     let hostname = traversalContext.hostname;
 
-    let threads = Math.floor(ns.getServerMaxRam(hostname) / ns.getScriptRam(args.script));
+    if (ns.getServerUsedRam(hostname) !== 0) {
+        return;
+    }
+
+    let threads = Math.floor((ns.getServerMaxRam(hostname) - ns.getServerUsedRam(hostname)) / ns.getScriptRam(args.script));
 
     if (!ns.hasRootAccess(hostname) || (scriptFlags["exclude"] as string[]).includes(hostname)) {
         return;
     }
 
-    ns.kill(args.script, hostname);
+    if (ns.isRunning(args.script, hostname, args.target, threads, args.minSecurity, args.maxMoney)) {
+        ns.print("Skript is already running on " + hostname);
+        return;
+    }
+
+    // ns.killall(hostname);
 
     if (hostname != "home" && threads > 0) {
         ns.scp(args.script, hostname);
-        ns.exec(args.script, hostname, threads, args.target == "" ? hostname : args.target, threads);
+
+        ns.exec(args.script, hostname, threads, args.target == "" ? hostname : args.target, threads, args.minSecurity, args.maxMoney);
         if (!traversalContext.traversal.suppressOutput) {
             ns.tprintf("%s-- %s: DEPLOYED", generateWhiteSpaces(traversalContext.distanceFromStart), hostname);
         }
@@ -38,8 +48,6 @@ const deployOnServer: ITraversalFunction = (ns: NS, traversalContext: TraversalC
 
 /** @param {NS} ns */
 export async function main(ns: NS) {
-    ns.disableLog("ALL");
-
     scriptFlags = ns.flags([
         ['output', false],
         ['target', ""],
@@ -49,13 +57,26 @@ export async function main(ns: NS) {
 
     let args = { server: "home", previousMax: 0 };
 
-    new Traversal(findServerWithMostMoney, !scriptFlags["output"] as boolean, scriptFlags["exclude"] as string[])
-        .start(ns, ns.getHostname(), args);
+    if (scriptFlags["target"] == "") {
+        new Traversal(findServerWithMostMoney, !scriptFlags["output"] as boolean, scriptFlags["exclude"] as string[])
+            .start(ns, ns.getHostname(), args);
+    } else {
+        args.server = scriptFlags["target"] as string;
+    }
 
-    ns.tprintf("Targeting %s with maximum money: %d", args.server, args.previousMax);
+    let minSecurity = ns.getServerMinSecurityLevel(args.server);
+    let maxMoney = ns.getServerMaxMoney(args.server);
+
+    ns.tprintf("Targeting %s!\nMaximum money: %d\nMinimum Security: %d", args.server, maxMoney, minSecurity);
 
     new Traversal(deployOnServer, !scriptFlags["output"] as boolean, scriptFlags["exclude"] as string[])
-        .start(ns, ns.getHostname(), { target: args.server, script: scriptFlags["script"] as string });
+        .start(ns, ns.getHostname(),
+            {
+                target: args.server,
+                script: scriptFlags["script"] as string,
+                minSecurity: minSecurity,
+                maxMoney: maxMoney
+            });
 }
 
 /** @param {Number} depth 

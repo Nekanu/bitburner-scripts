@@ -1,5 +1,5 @@
-import { ITraversalFunction, Traversal, TraversalContext } from "types/Traversal";
-import { NS } from "./types/Netscript";
+import { ITraversalFunction, Traversal, TraversalContext } from "types/traversal";
+import { NS } from "types/netscript";
 
 const escalate: ITraversalFunction = (ns: NS, traversalContext: TraversalContext, args: { portOpeners: number }) => {
     const hostname = traversalContext.hostname;
@@ -35,7 +35,9 @@ const escalate: ITraversalFunction = (ns: NS, traversalContext: TraversalContext
 
     // NUKE IT!!!1!
     ns.nuke(hostname);
-    ns.tprintf("SUCCESS -- Hacked %s!", hostname);
+    if (!suppressOutput) {
+        ns.tprintf("SUCCESS -- Hacked %s!", hostname);
+    }
 };
 
 /** 
@@ -44,6 +46,12 @@ const escalate: ITraversalFunction = (ns: NS, traversalContext: TraversalContext
 export async function main(ns: NS) {
     ns.disableLog("ALL");
 
+    const flags = ns.flags([
+        ['silent', false],
+    ]);
+
+    ns.printf("Escalating to root access on all servers... Silent: %s", flags["silent"] as boolean);
+
     // Check which port openers are available
     let portOpeners = ns.fileExists("BruteSSH.exe", "home") ? 1 : 0;
     portOpeners += ns.fileExists("FTPCrack.exe", "home") ? 1 : 0;
@@ -51,5 +59,5 @@ export async function main(ns: NS) {
     portOpeners += ns.fileExists("HTTPWorm.exe", "home") ? 1 : 0;
     portOpeners += ns.fileExists("SQLInject.exe", "home") ? 1 : 0;
 
-    new Traversal(escalate, false).start(ns, ns.getHostname(), { portOpeners: portOpeners });
+    new Traversal(escalate, flags["silent"] as boolean).start(ns, ns.getHostname(), { portOpeners: portOpeners });
 }
