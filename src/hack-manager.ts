@@ -36,7 +36,7 @@ export async function main(ns: NS) {
         for (const [server, pids] of monitorServers) {
 
             if (!ns.isRunning(pids[0], server)) {
-                ns.printf("%s -- %s finished! Resetting blocklist", new Date().toLocaleTimeString(), server);
+                // ns.printf("%s -- %s finished! Resetting blocklist", new Date().toLocaleTimeString(), server);
                 monitorServers.delete(server);
                 blockedServers = [];
             }
