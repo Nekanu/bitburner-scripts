@@ -54,22 +54,25 @@ export class Traversal {
     }
 }
 
-export function getFreeRAM(ns: NS) {
+export function getRamMapping(ns: NS): { total: [number, number], ramMapping: Map<string, [number, number]> } {
 
     const result = {
-        totalAmount: 0,
-        ramMapping: new Map<string, number>()
+        total: [0, 0] as [number, number],
+        ramMapping: new Map<string, [number, number]>()
     };
 
-    new Traversal((ns: NS, context: TraversalContext, args: { totalAmount: number, ramMapping: Map<string, number> }) => {
+    new Traversal((ns: NS, context: TraversalContext, args: { total: [number, number], ramMapping: Map<string, [number, number]> }) => {
         const server = context.hostname;
 
         if (!ns.hasRootAccess(server)) return;
 
-        const freeRAM = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
+        const maxRam = ns.getServerMaxRam(server);
 
-        args.totalAmount += freeRAM;
-        args.ramMapping.set(server, freeRAM);
+        const freeRAM = maxRam - ns.getServerUsedRam(server);
+
+        args.total[0] += freeRAM;
+        args.total[1] += maxRam;
+        args.ramMapping.set(server, [freeRAM, maxRam]);
     }, false, ["home"])
         .start(ns, "home", result);
 

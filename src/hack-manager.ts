@@ -1,20 +1,26 @@
 import { NS } from "types/netscript";
-import { getFreeRAM, ITraversalFunction, Traversal, TraversalContext } from "types/traversal";
+import { getRamMapping, ITraversalFunction, Traversal, TraversalContext } from "types/traversal";
 
 const weakenScript = "/lib/weaken.js";
 const growScript = "/lib/grow.js";
 const hackScript = "/lib/hack.js";
+const shareScript = "/lib/share.js";
 
 const monitorServers = new Map<string, number[]>();
 
 function determineActionAndNeededRam(ns: NS, target: string): { script: string, neededThreads: number } {
-    if (ns.getServerMinSecurityLevel(target) < ns.getServerSecurityLevel(target) * 0.95) {
+
+    // const growthFactor = ns.getHackingLevel() / 1000 < 0.95 ? ns.getHackingLevel() / 1000 : 0.95;
+
+    if (ns.getServerMinSecurityLevel(target) < ns.getServerSecurityLevel(target) * 0.9) {
         return { script: weakenScript, neededThreads: calculateWeakenThreads(ns, target) };
     } else if (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target) * 0.95) {
-        return { script: growScript, neededThreads: calculateGrowThreads(ns, target) };
+        return { script: growScript, neededThreads: calculateGrowThreads(ns, target, 0.95) };
     } else {
         return { script: hackScript, neededThreads: calculateHackThreads(ns, target) };
     }
+
+
 }
 
 /**
@@ -29,6 +35,8 @@ export async function main(ns: NS) {
 
     let profitableServers = sortServersAfterProfit(ns);
     let blockedServers: string[] = [];
+
+    ns.printf("Most profitable server: %s -> %d", profitableServers[0][0], profitableServers[0][1]);
 
     while (true) {
 
@@ -51,23 +59,27 @@ export async function main(ns: NS) {
         for (const [server,] of profitableServers) {
             if (!monitorServers.has(server) && !blockedServers.includes(server)) {
                 const res = determineActionAndNeededRam(ns, server);
-                const freeRam = getFreeRAM(ns);
-                const scriptRam = ns.getScriptRam(res.script);
-                const neededRam = res.neededThreads * scriptRam;
+                const freeRam = getRamMapping(ns);
                 let availableThreads = 0;
-
-                for (const [, ram] of freeRam.ramMapping) {
-                    availableThreads += Math.floor(ram / scriptRam);
-                }
+                freeRam.ramMapping.forEach((ram,) => {
+                    availableThreads += Math.floor(ram[0] / ns.getScriptRam(res.script));
+                });
 
                 if (availableThreads > 0) {
-                    ns.printf("%s -- %s \t-> %s (%d threads - %d GB) -> %d GB (%d threads)", new Date().toLocaleTimeString(), res.script, server, res.neededThreads, neededRam, freeRam.totalAmount, availableThreads);
+                    ns.printf("%s -- %-14s -> %-18s (%d / %d)", new Date().toLocaleTimeString(), res.script, server, res.neededThreads, availableThreads);
                     let pids = findAndExecuteScriptOnServers(ns, server, res.script, res.neededThreads);
                     monitorServers.set(server, pids);
                 } else {
                     blockedServers.push(server);
                 }
             }
+        }
+
+        // If there is enough free ram, run share script and wait until it is done
+        if (getRamMapping(ns).total[0] > 20000) {
+            //findAndExecuteScriptOnServers(ns, profitableServers[0][0], weakenScript, Number.MAX_VALUE);
+            findAndExecuteScriptOnServers(ns, "", shareScript, Number.MAX_VALUE);
+            await ns.sleep(10000);
         }
 
         await ns.sleep(1000);
@@ -124,10 +136,10 @@ function calculateWeakenThreads(ns: NS, target: string) {
     return threads;
 }
 
-function calculateGrowThreads(ns: NS, target: string) {
+function calculateGrowThreads(ns: NS, target: string, growthFactor: number) {
     const targetCurrentMoney = ns.getServerMoneyAvailable(target) + 1;
-    const targetMaxMoney = ns.getServerMaxMoney(target);
-    // ns.printf("Performing grow on %s: Has %s, max: %s", target, convertToHumanReadable(ns, targetCurrentMoney), convertToHumanReadable(ns, targetMaxMoney));
+    const targetMaxMoney = ns.getServerMaxMoney(target) * growthFactor;
+    //ns.printf("Performing grow on %s: Has %s, max: %s", target, convertToHumanReadable(ns, targetCurrentMoney), convertToHumanReadable(ns, targetMaxMoney));
     return Math.ceil(ns.growthAnalyze(target, targetMaxMoney / targetCurrentMoney));
 }
 
@@ -149,7 +161,7 @@ function sortServersAfterProfit(ns: NS) {
         const money = ns.getServerMaxMoney(server);
 
         // Filter for servers that have money
-        if (money > 0) {
+        if (money > ns.getTotalScriptIncome()[0]) {
             args.result.set(server, money);
         }
     };

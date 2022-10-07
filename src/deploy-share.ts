@@ -2,7 +2,7 @@ import { NS, ScriptArg } from "types/netscript";
 import { ITraversalFunction, Traversal, TraversalContext } from "types/traversal";
 
 var scriptFlags: { [key: string]: string[] | ScriptArg };
-const shareScript = "/lib/share.js";
+const shareScript = "/lib/share-loop.js";
 
 /**
  * @param {NS} ns
