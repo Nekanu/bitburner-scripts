@@ -3,8 +3,8 @@ import { NS } from "types/netscript";
 
 
 export async function main(ns: NS) {
-    let data = "())(a))(a(";
-    let contract: Contract = contracts.find(c => c.name === "Sanitize Parentheses in Expression")!;
+    let data = 11;
+    let contract: Contract = contracts.find(c => c.name === "Total Ways to Sum")!;
 
     ns.tprint(contract.solver(data));
 }
