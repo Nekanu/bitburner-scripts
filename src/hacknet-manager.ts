@@ -56,6 +56,12 @@ async function determinePurchase(ns: NS) {
         ns.printf("%s -- Purchasing new Node in %i seconds", new Date().toLocaleTimeString(), nodePurchase);
         await ns.sleep(nodePurchase);
         ns.hacknet.purchaseNode();
+
+        // Reset minimum node to ensure that the new node is upgraded
+        minimumNode.cores = 1;
+        minimumNode.ram = 1;
+        minimumNode.level = 1;
+
         return;
     }
 
@@ -140,6 +146,18 @@ function determineNextUpgrade(ns: NS) {
         minimumNode.ram *= 2;
         ns.printf("%s -- Upgrading minimum Node RAM to %i GB", new Date().toLocaleTimeString(), minimumNode.ram);
         return
+    }
+
+    if (minimumNode.level < 180) {
+        minimumNode.level++;
+        ns.printf("%s -- Upgrading minimum Node level to %i", new Date().toLocaleTimeString(), minimumNode.level);
+        return;
+    }
+
+    if (minimumNode.cores < 6) {
+        minimumNode.cores++;
+        ns.printf("%s -- Upgrading minimum Node cores to %i", new Date().toLocaleTimeString(), minimumNode.cores);
+        return;
     }
 
     if (minimumNode.level < 200) {
