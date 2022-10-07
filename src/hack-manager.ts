@@ -8,24 +8,10 @@ const shareScript = "/lib/share.js";
 
 const monitorServers = new Map<string, number[]>();
 
-function determineActionAndNeededRam(ns: NS, target: string): { script: string, neededThreads: number } {
-
-    // const growthFactor = ns.getHackingLevel() / 1000 < 0.95 ? ns.getHackingLevel() / 1000 : 0.95;
-
-    if (ns.getServerMinSecurityLevel(target) < ns.getServerSecurityLevel(target) * 0.9) {
-        return { script: weakenScript, neededThreads: calculateWeakenThreads(ns, target) };
-    } else if (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target) * 0.95) {
-        return { script: growScript, neededThreads: calculateGrowThreads(ns, target, 0.95) };
-    } else {
-        return { script: hackScript, neededThreads: calculateHackThreads(ns, target) };
-    }
-
-
-}
-
 /**
+ * The main function of the script
+ * 
  * @param {NS} ns
- * @arg {string} hostname
  */
 export async function main(ns: NS) {
     ns.disableLog("ALL");
@@ -35,8 +21,6 @@ export async function main(ns: NS) {
 
     let profitableServers = sortServersAfterProfit(ns);
     let blockedServers: string[] = [];
-
-    ns.printf("Most profitable server: %s -> %d", profitableServers[0][0], profitableServers[0][1]);
 
     while (true) {
 
@@ -58,7 +42,7 @@ export async function main(ns: NS) {
 
         for (const [server,] of profitableServers) {
             if (!monitorServers.has(server) && !blockedServers.includes(server)) {
-                const res = determineActionAndNeededRam(ns, server);
+                const res = determineActionAndNeededThreads(ns, server);
                 const freeRam = getRamMapping(ns);
                 let availableThreads = 0;
                 freeRam.ramMapping.forEach((ram,) => {
@@ -86,12 +70,35 @@ export async function main(ns: NS) {
     }
 }
 
+/**
+ * Determines which action to take.
+ * 
+ * @param {NS} ns
+ * @param {string} target
+ * @returns The script to execute along with the number of threads needed
+ */
+function determineActionAndNeededThreads(ns: NS, target: string): { script: string, neededThreads: number } {
+
+    if (ns.getServerMinSecurityLevel(target) < ns.getServerSecurityLevel(target) * 0.9) {
+        return { script: weakenScript, neededThreads: calculateWeakenThreads(ns, target) };
+    } else if (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target) * 0.95) {
+        return { script: growScript, neededThreads: calculateGrowThreads(ns, target) };
+    } else {
+        return { script: hackScript, neededThreads: calculateHackThreads(ns, target, 0.75) };
+    }
+}
+
+/**
+ * Finds the 
+ */
 const findFreeScriptRAM: ITraversalFunction = (ns: NS, context: TraversalContext, args: { neededThreads: number, scriptCost: number, result: Map<string, number> }) => {
     const server = context.hostname;
 
     if (!ns.hasRootAccess(server)) return;
 
-    const freeRAM = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
+    let maxRam = ns.getServerMaxRam(server);
+
+    const freeRAM = maxRam - ns.getServerUsedRam(server);
     const freeThreads = Math.floor(freeRAM / args.scriptCost);
 
     const threads = Math.min(freeThreads, args.neededThreads);
@@ -100,8 +107,6 @@ const findFreeScriptRAM: ITraversalFunction = (ns: NS, context: TraversalContext
         args.result.set(server, threads);
         args.neededThreads -= threads;
     }
-
-    return args.neededThreads === 0;
 };
 
 function findAndExecuteScriptOnServers(ns: NS, target: string, script: string, neededThreads: number): number[] {
@@ -114,7 +119,10 @@ function findAndExecuteScriptOnServers(ns: NS, target: string, script: string, n
     // ns.printf("%s -- %s on %s needs %d threads", new Date().toLocaleTimeString(), script, target, neededThreads);
 
     for (const [server, threads] of threadMap) {
-        ns.rm(script, server);
+        if (server !== "home") {
+            ns.rm(script, server);
+        }
+
         ns.scp(script, server);
         let pid = ns.exec(script, server, threads, target, threads, 0);
         // ns.printf("    %s -> %s threads, PID: %i", server, threads, pid);
@@ -126,8 +134,14 @@ function findAndExecuteScriptOnServers(ns: NS, target: string, script: string, n
     return pids;
 }
 
+/**
+ * Calculates the number of threads needed to weaken a server to its minimum security level
+ * 
+ * @param {NS} ns
+ * @arg {string} target
+ * @returns {number} The number of threads needed to weaken the target server to minimum security level
+ */
 function calculateWeakenThreads(ns: NS, target: string) {
-    // ns.printf("Performing weaken on %s to %s", target, targetMinSecurity);
     let threads = 1;
     while (ns.weakenAnalyze(threads) < (ns.getServerSecurityLevel(target) - ns.getServerMinSecurityLevel(target))) {
         threads++;
@@ -136,18 +150,41 @@ function calculateWeakenThreads(ns: NS, target: string) {
     return threads;
 }
 
-function calculateGrowThreads(ns: NS, target: string, growthFactor: number) {
-    const targetCurrentMoney = ns.getServerMoneyAvailable(target) + 1;
-    const targetMaxMoney = ns.getServerMaxMoney(target) * growthFactor;
-    //ns.printf("Performing grow on %s: Has %s, max: %s", target, convertToHumanReadable(ns, targetCurrentMoney), convertToHumanReadable(ns, targetMaxMoney));
+/**
+ * Calculates the number of threads needed to grow a server to its maximum money level
+ * (Becomes unreliable if the server has no money)
+ * 
+ * @param {NS} ns
+ * @arg {string} target
+ * @returns {number} The number of threads needed to grow the target server to maximum money level
+ */
+function calculateGrowThreads(ns: NS, target: string) {
+
+    // Use 100 000 as base value if server has no money (to avoid division by zero)
+    const targetCurrentMoney = ns.getServerMoneyAvailable(target) == 0 ? 100000 : ns.getServerMoneyAvailable(target);
+    const targetMaxMoney = ns.getServerMaxMoney(target);
     return Math.ceil(ns.growthAnalyze(target, targetMaxMoney / targetCurrentMoney));
 }
 
-function calculateHackThreads(ns: NS, target: string) {
-    // ns.printf("Performing hack on %s", target);
-    return Math.ceil(ns.hackAnalyzeThreads(target, ns.getServerMoneyAvailable(target) * 0.95));
+/**
+ * Calculates the number of threads needed to hack a server to get a specific amount of money
+ * 
+ * @param {NS} ns
+ * @param {string} target The target to hack
+ * @param {number} percentage The percentage of the target server's available money to hack
+ * @returns {number} The number of threads needed to hack the target server to get the specified percentage of its available money
+ */
+function calculateHackThreads(ns: NS, target: string, percentage: number) {
+    // Do only hack 75% of the money of this server to make sure we can re-grow it relatively easily
+    return Math.ceil(ns.hackAnalyzeThreads(target, ns.getServerMoneyAvailable(target) * percentage));
 }
 
+/**
+ * Returns a sorted list of all servers sorted by their profitability
+ * 
+ * @param {NS} ns
+ * @returns {[string, number]} A list of all servers sorted by their profitability
+ */
 function sortServersAfterProfit(ns: NS) {
 
     const serversWithMoney: ITraversalFunction = (ns: NS, context: TraversalContext, args: { result: Map<string, number> }) => {
