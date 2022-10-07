@@ -60,7 +60,7 @@ export async function main(ns: NS) {
         }
 
         // If there is enough free ram, run share script and wait until it is done
-        if (getRamMapping(ns).total[0] > 20000) {
+        if (getRamMapping(ns, ["home"]).total[0] > 20000) {
             //findAndExecuteScriptOnServers(ns, profitableServers[0][0], weakenScript, Number.MAX_VALUE);
             findAndExecuteScriptOnServers(ns, "", shareScript, Number.MAX_VALUE);
             await ns.sleep(10000);
@@ -98,6 +98,10 @@ const findFreeScriptRAM: ITraversalFunction = (ns: NS, context: TraversalContext
 
     let maxRam = ns.getServerMaxRam(server);
 
+    if (server === "home") {
+        maxRam -= 16;
+    }
+
     const freeRAM = maxRam - ns.getServerUsedRam(server);
     const freeThreads = Math.floor(freeRAM / args.scriptCost);
 
@@ -112,7 +116,7 @@ const findFreeScriptRAM: ITraversalFunction = (ns: NS, context: TraversalContext
 function findAndExecuteScriptOnServers(ns: NS, target: string, script: string, neededThreads: number): number[] {
     const threadMap = new Map<string, number>();
 
-    new Traversal(findFreeScriptRAM, false, ["home"]).start(ns, "home", { neededThreads: neededThreads, scriptCost: ns.getScriptRam(script), result: threadMap });
+    new Traversal(findFreeScriptRAM, false, []).start(ns, "home", { neededThreads: neededThreads, scriptCost: ns.getScriptRam(script), result: threadMap });
 
     let pids: number[] = [];
 
