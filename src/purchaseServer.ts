@@ -13,9 +13,9 @@ export async function main(ns: NS) {
             const purchaseCost = ns.getPurchasedServerCost(ram);
 
             if (purchaseCost < playerMoney) {
-                ns.tprintf("INFO -- Server with %d GB RAM:\t\t%s", ram, convertToHumanReadable(ns, purchaseCost));
+                ns.tprintf("INFO -- %7d GB RAM: %s", ram, convertToHumanReadable(ns, purchaseCost));
             } else {
-                ns.tprintf("WARN -- Server with %d GB RAM:\t\t%s", ram, convertToHumanReadable(ns, purchaseCost));
+                ns.tprintf("WARN -- %7d GB RAM: %s", ram, convertToHumanReadable(ns, purchaseCost));
             }
             ram *= 2;
         }
@@ -30,14 +30,18 @@ export async function main(ns: NS) {
         return;
     }
 
-    ns.tprintf("INFO -- Purchasing a %d GB server costs %s", ram, convertToHumanReadable(ns, ns.getPurchasedServerCost(ram)));
+    let serverName = ns.args[1] as string || `prim${purchasedServers.length < 10 ? "0" : ""}${purchasedServers.length}`;
 
-    if (ns.args.length < 2) {
-        return;
+    // If no server name is given, find the first available name OR replace the server with the lowest RAM
+    if (ns.args[1] === undefined) {
+        if (purchasedServers.length < maxNumberServers) {
+            serverName = `prim${purchasedServers.length < 10 ? "0" : ""}${purchasedServers.length}`;
+        } else {
+            serverName = purchasedServers.reduce((a, b) =>
+                ns.getServerMaxRam(a) < ns.getServerMaxRam(b) ? a : b
+            );
+        }
     }
-
-    const serverName = ns.args[1] as string;
-
     // Check if player has enough money
     if (ns.getPurchasedServerCost(ram) > ns.getPlayer().money) {
         ns.tprintf("ERROR -- You don't have enough money to purchase this server!");
@@ -74,6 +78,6 @@ export async function main(ns: NS) {
         return;
     }
 
-    ns.tprintf("SUCCESS -- Purchasing server %s with %d GB RAM", serverName, ram);
+    ns.tprintf("SUCCESS -- Purchasing server %s with %d GB RAM for %s", serverName, ram, convertToHumanReadable(ns, ns.getPurchasedServerCost(ram)));
     ns.purchaseServer(serverName, ram);
 }
