@@ -136,7 +136,7 @@ export function getFnIsAliveViaNsPs(ns) {
  * Has the capacity to retry if there is a failure (e.g. due to lack of RAM available). Not recommended for performance-critical code.
  * @param {NS} ns - The nestcript instance passed to your script's main entry point
  * @param {string} command - The ns command that should be invoked to get the desired data (e.g. "ns.getServer('home')" )
- * @param {string=} fName - (default "/Temp/{commandhash}-data.txt") The name of the file to which data will be written to disk by a temporary process
+ * @param {string=} fName - (default "/tmp/{commandhash}-data.txt") The name of the file to which data will be written to disk by a temporary process
  * @param {args=} args - args to be passed in as arguments to command being run as a new script.
  * @param {bool=} verbose - (default false) If set to true, pid and result of command are logged.
  **/
@@ -158,8 +158,8 @@ export async function getNsDataThroughFile_Custom(ns, fnRun, command, fName, arg
     checkNsInstance(ns, '"getNsDataThroughFile_Custom"');
     if (!verbose) disableLogs(ns, ['read']);
     const commandHash = hashCode(command);
-    fName = fName || `/Temp/${commandHash}-data.txt`;
-    const fNameCommand = (fName || `/Temp/${commandHash}-command`) + '.js'
+    fName = fName || `/tmp/${commandHash}-data.txt`;
+    const fNameCommand = (fName || `/tmp/${commandHash}-command`) + '.js'
     // Pre-write contents to the file that will allow us to detect if our temp script never got run
     const initialContents = "<Insufficient RAM>";
     await ns.write(fName, initialContents, 'w');
@@ -194,7 +194,7 @@ export async function getNsDataThroughFile_Custom(ns, fnRun, command, fName, arg
 /** Evaluate an arbitrary ns command by writing it to a new script and then running or executing it.
  * @param {NS} ns - The nestcript instance passed to your script's main entry point
  * @param {string} command - The ns command that should be invoked to get the desired data (e.g. "ns.getServer('home')" )
- * @param {string=} fileName - (default "/Temp/{commandhash}-data.txt") The name of the file to which data will be written to disk by a temporary process
+ * @param {string=} fileName - (default "/tmp/{commandhash}-data.txt") The name of the file to which data will be written to disk by a temporary process
  * @param {args=} args - args to be passed in as arguments to command being run as a new script.
  * @param {bool=} verbose - (default false) If set to true, the evaluation result of the command is printed to the terminal
  */
@@ -225,7 +225,7 @@ function getExports(ns) {
  * @param {NS} ns - The nestcript instance passed to your script's main entry point
  * @param {function} fnRun - A single-argument function used to start the new sript, e.g. `ns.run` or `(f,...args) => ns.exec(f, "home", ...args)`
  * @param {string} command - The ns command that should be invoked to get the desired data (e.g. "ns.getServer('home')" )
- * @param {string=} fileName - (default "/Temp/{commandhash}-data.txt") The name of the file to which data will be written to disk by a temporary process
+ * @param {string=} fileName - (default "/tmp/{commandhash}-data.txt") The name of the file to which data will be written to disk by a temporary process
  * @param {args=} args - args to be passed in as arguments to command being run as a new script.
  **/
 export async function runCommand_Custom(ns, fnRun, command, fileName, args = [], verbose = false, maxRetries = 5, retryDelayMs = 50) {
@@ -236,7 +236,7 @@ export async function runCommand_Custom(ns, fnRun, command, fileName, args = [],
     const required = getExports(ns).filter(e => command.includes(`${e}(`));
     let script = (required.length > 0 ? `import { ${required.join(", ")} } from 'helpers.js'\n` : '') +
         `export async function main(ns) { ${command} }`;
-    fileName = fileName || `/Temp/${hashCode(command)}-command.js`;
+    fileName = fileName || `/tmp/${hashCode(command)}-command.js`;
     if (verbose)
         log(ns, `INFO: Using a temporary script (${fileName}) to execute the command:` +
             `\n  ${command}\nWith the following arguments:    ${JSON.stringify(args)}`);
@@ -384,12 +384,12 @@ export async function getActiveSourceFiles_Custom(ns, fnGetNsDataThroughFile, in
     try {
         dictSourceFiles = await fnGetNsDataThroughFile(ns,
             `Object.fromEntries(ns.singularity.getOwnedSourceFiles().map(sf => [sf.n, sf.lvl]))`,
-            '/Temp/owned-source-files.txt');
+            '/tmp/owned-source-files.txt');
     } catch { dictSourceFiles = {}; } // If this fails (e.g. low RAM), return an empty dictionary
     // If the user is currently in a given bitnode, they will have its features unlocked
     if (includeLevelsFromCurrentBitnode) {
         try {
-            const bitNodeN = (await fnGetNsDataThroughFile(ns, 'ns.getPlayer()', '/Temp/player-info.txt')).bitNodeN;
+            const bitNodeN = (await fnGetNsDataThroughFile(ns, 'ns.getPlayer()', '/tmp/player-info.txt')).bitNodeN;
             dictSourceFiles[bitNodeN] = Math.max(3, dictSourceFiles[bitNodeN] || 0);
         } catch { /* We are expected to be fault-tolerant in low-ram conditions */ }
     }
@@ -409,7 +409,7 @@ export async function tryGetBitNodeMultipliers_Custom(ns, fnGetNsDataThroughFile
     let canGetBitNodeMultipliers = false;
     try { canGetBitNodeMultipliers = 5 in (await getActiveSourceFiles_Custom(ns, fnGetNsDataThroughFile)); } catch { }
     if (!canGetBitNodeMultipliers) return null;
-    try { return await fnGetNsDataThroughFile(ns, 'ns.getBitNodeMultipliers()', '/Temp/bitnode-multipliers.txt'); } catch { }
+    try { return await fnGetNsDataThroughFile(ns, 'ns.getBitNodeMultipliers()', '/tmp/bitnode-multipliers.txt'); } catch { }
     return null;
 }
 
@@ -419,7 +419,7 @@ export async function instanceCount(ns, onHost = "home", warn = true, tailOtherI
     checkNsInstance(ns, '"alreadyRunning"');
     const scriptName = ns.getScriptName();
     const others = await getNsDataThroughFile(ns, 'ns.ps(ns.args[0]).filter(p => p.filename == ns.args[1]).map(p => p.pid)',
-        '/Temp/ps-other-instances.txt', [onHost, scriptName]);
+        '/tmp/ps-other-instances.txt', [onHost, scriptName]);
     if (others.length >= 2) {
         if (warn)
             log(ns, `WARNING: You cannot start multiple versions of this script (${scriptName}). Please shut down the other instance first.` +
@@ -438,7 +438,7 @@ let cachedStockSymbols = null; // Cache of stock symbols since these never chang
 export async function getStockSymbols(ns) {
     cachedStockSymbols ??= await getNsDataThroughFile(ns,
         `(() => { try { return ns.stock.getSymbols(); } catch { return null; } })()`,
-        '/Temp/stock-symbols.txt');
+        '/tmp/stock-symbols.txt');
     return cachedStockSymbols;
 }
 
@@ -448,7 +448,7 @@ export async function getStocksValue(ns) {
     let stockSymbols = await getStockSymbols(ns);
     if (stockSymbols == null) return 0; // No TIX API Access
     const helper = async (fn) => await getNsDataThroughFile(ns,
-        `Object.fromEntries(ns.args.map(sym => [sym, ns.stock.${fn}(sym)]))`, `/Temp/stock-${fn}.txt`, stockSymbols);
+        `Object.fromEntries(ns.args.map(sym => [sym, ns.stock.${fn}(sym)]))`, `/tmp/stock-${fn}.txt`, stockSymbols);
     const askPrices = await helper('getAskPrice');
     const bidPrices = await helper('getBidPrice');
     const positions = await helper('getPosition');

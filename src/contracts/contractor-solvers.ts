@@ -7,7 +7,7 @@
  * Last updated: 2021-08-01
  */
 
-const fUnsolvedContracts = '/Temp/unsolved-contracts.txt'; // A global, persistent array of contracts we couldn't solve, so we don't repeatedly log about them.
+const fUnsolvedContracts = '/tmp/unsolved-contracts.txt'; // A global, persistent array of contracts we couldn't solve, so we don't repeatedly log about them.
 
 //Silly human, you can't import a typescript module into a javascript 
 //import { codingContractTypesMetadata } from 'https://raw.githubusercontent.com/danielyxie/bitburner/master/src/data/codingcontracttypes.ts'

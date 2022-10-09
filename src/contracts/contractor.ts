@@ -28,8 +28,8 @@ export async function main(ns) {
     const serializedContractDb = JSON.stringify(contractsDb);
     let contractsDictCommand = async (command, tempName) => await getNsDataThroughFile(ns,
         `Object.fromEntries(JSON.parse(ns.args[0]).map(c => [c.contract, ${command}]))`, tempName, [serializedContractDb]);
-    let dictContractTypes = await contractsDictCommand('ns.codingcontract.getContractType(c.contract, c.hostname)', '/Temp/contract-types.txt');
-    let dictContractData = await contractsDictCommand('ns.codingcontract.getData(c.contract, c.hostname)', '/Temp/contract-data.txt');
+    let dictContractTypes = await contractsDictCommand('ns.codingcontract.getContractType(c.contract, c.hostname)', '/tmp/contract-types.txt');
+    let dictContractData = await contractsDictCommand('ns.codingcontract.getData(c.contract, c.hostname)', '/tmp/contract-data.txt');
     contractsDb.forEach(c => c.type = dictContractTypes[c.contract]);
     contractsDb.forEach(c => c.data = dictContractData[c.contract]);
 
