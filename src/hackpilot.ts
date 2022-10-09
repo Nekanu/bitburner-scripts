@@ -57,6 +57,14 @@ export async function main(ns: NS) {
             await escalate(ns);
         }
 
+        // Prefer running hacks
+        status.forEach((hackStatus,) => {
+            if (hackStatus.state === HackState.Running) {
+                hackStatus.performAction(ns);
+            }
+        });
+
+        // Select new servers with the highest profit, if there is enough RAM left
         for (const [server,] of profitableServers) {
             if (!status.has(server)) {
                 status.set(server, new HackStatus(ns, server));
@@ -251,6 +259,7 @@ async function escalate(ns: NS) {
 class HackStatus {
     target: string;
     action: HackAction;
+    state: HackState = HackState.Waiting;
     monitorPids: number[] = [];
     threadsNeeded: number;
 
@@ -264,6 +273,8 @@ class HackStatus {
      * Performs the action specified by this status to best ability
      */
     public performAction(ns: NS) {
+        this.state = HackState.Running;
+
         let newPids: [number, number][] = [];
         switch (this.action) {
             case HackAction.None:
@@ -346,8 +357,17 @@ class HackStatus {
         this.monitorPids = this.monitorPids.filter(pid => ns.isRunning(pid));
 
         if (this.monitorPids.length == 0 && this.threadsNeeded <= 0) {
+            const prevAction = this.action;
+
+
+
             this.action = HackStatus.determineAction(ns, this.target);
             this.threadsNeeded = HackStatus.calculateThreadsNeeded(ns, this.target, this.action);
+
+            // Let this hack wait
+            if (prevAction == HackAction.Hack && this.action == HackAction.Weaken) {
+                this.state = HackState.Waiting;
+            }
         }
     }
 }
@@ -357,4 +377,9 @@ enum HackAction {
     Weaken,
     Grow,
     Hack
+}
+
+enum HackState {
+    Waiting,
+    Running
 }
