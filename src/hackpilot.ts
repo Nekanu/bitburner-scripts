@@ -85,14 +85,26 @@ export async function main(ns: NS) {
     }
 }
 
+/**
+ * Finds servers to run a script on and executes the script on them
+ * 
+ * @param {NS} ns
+ * @param {string} target The target server needed for the script
+ * @param {string} script The script to run
+ * @param {number} neededThreads The amount of threads needed for maximum efficiency
+ * @returns {[number, number][]} The pid of the script and the amount of threads used for each server
+ */
 function findAndExecuteScriptOnServers(ns: NS, target: string, script: string, neededThreads: number): [number, number][] {
-    const threadMap = new Map<string, number>();
 
+    // Get the free ram mapping
     const ramMapping = getRamMapping(ns, enableHomeUse ? [] : ["home"]);
 
     const scriptCost = ns.getScriptRam(script);
     let totalAvailableThreads = 0;
     let neededThreadsLeft = neededThreads;
+    const threadMap = new Map<string, number>();
+
+    // Generate a map containing the amount of threads to perform on each server
     ramMapping.ramMapping.forEach((ram, server) => {
 
         let availableServerThreads = 0;
@@ -106,6 +118,7 @@ function findAndExecuteScriptOnServers(ns: NS, target: string, script: string, n
         totalAvailableThreads += availableServerThreads;
 
         if (availableServerThreads > 0 && neededThreadsLeft > 0) {
+            // Calculate the amount of threads to use on this server
             let threads = Math.min(availableServerThreads, neededThreadsLeft);
 
             threadMap.set(server, threads);
@@ -113,24 +126,33 @@ function findAndExecuteScriptOnServers(ns: NS, target: string, script: string, n
         }
     });
 
+    // If there are no threads available, return
     if (totalAvailableThreads == 0) {
         return [];
     }
 
     let pids: [number, number][] = [];
 
+    // Execute the script on the servers as specified in the threadMap
     for (const [server, threads] of threadMap) {
+        // Removes the old script from the server
         if (server !== "home") {
             ns.rm(script, server);
         }
 
+        // Copy the script to the server
         ns.scp(script, server);
+
+        // Execute the script
         let pid = ns.exec(script, server, threads, target, threads, 0);
+
+        // Push all successful started processes specified by their to the array
         if (pid > 0) {
             pids.push([pid, threads]);
         }
     }
 
+    // Print information about the script execution, only if it is not the share script
     if (script !== shareScript) {
         let threadsStarted = pids.reduce((prev, [, threads]) => prev + threads, 0);
         ns.printf("%s -- %-14s -> %-18s (%d / %d / %d)", new Date().toLocaleTimeString(), script, target, threadsStarted, neededThreads, totalAvailableThreads);
@@ -195,6 +217,11 @@ function sortServersAfterProfit(ns: NS) {
     const serversWithMoney: ITraversalFunction = (ns: NS, context: TraversalContext, args: { result: Map<string, number> }) => {
         const server = context.hostname;
 
+        // Do not consider servers that are not yet hijacked
+        if (!ns.hasRootAccess(server)) {
+            return;
+        }
+
         const money = ns.getServerMaxMoney(server);
 
         // Filter for servers that have money
@@ -233,6 +260,9 @@ class HackStatus {
         this.threadsNeeded = HackStatus.calculateThreadsNeeded(ns, target, this.action);
     }
 
+    /**
+     * Performs the action specified by this status to best ability
+     */
     public performAction(ns: NS) {
         let newPids: [number, number][] = [];
         switch (this.action) {
@@ -249,21 +279,33 @@ class HackStatus {
                 break;
         }
 
+        // Add the new pids to the monitor list and adjust the threads needed
         newPids.forEach(([pid, threads]) => {
             this.monitorPids.push(pid);
             this.threadsNeeded -= threads;
         });
 
+        // If we have no more threads needed, we wait until all scripts are finished
         if (this.threadsNeeded <= 0) {
             this.action = HackAction.None;
         }
     }
 
+    /**
+     * Determines the next action that should be performed on the target server
+     * 
+     * @param {NS} ns
+     * @param {string} target The server to target
+     * @returns {HackAction} The next action that should be performed on the target server
+     */
     static determineAction(ns: NS, target: string): HackAction {
+        // If the server is not hijacked, we cannot target it. 
+        // So we wait until it is
         if (!ns.hasRootAccess(target)) {
             return HackAction.None;
         }
 
+        // Try to hack the server only if it is at minimum security level and maximum possible money
         if (ns.getServerMinSecurityLevel(target) < ns.getServerSecurityLevel(target) * 0.9) {
             return HackAction.Weaken;
         } else if (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target) * 0.95) {
@@ -273,6 +315,14 @@ class HackStatus {
         }
     }
 
+    /**
+     * Calculates the number of threads needed to perform the specified action on the target server
+     * 
+     * @param {NS} ns
+     * @param {string} target The server to target
+     * @param {HackAction} action The action to perform
+     * @returns {number} The number of threads needed to perform the specified action
+     */
     static calculateThreadsNeeded(ns: NS, target: string, action: HackAction): number {
         switch (action) {
             case HackAction.Weaken:
@@ -286,6 +336,12 @@ class HackStatus {
         }
     }
 
+    /**
+     * Checks if the specified pids is still running and updates the status accordingly
+     * If all pids are finished, the next status is determined
+     * 
+     * @param {NS} ns
+     */
     public monitor(ns: NS) {
         this.monitorPids = this.monitorPids.filter(pid => ns.isRunning(pid));
 
