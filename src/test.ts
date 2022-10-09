@@ -4,6 +4,11 @@ const weakenScript = "/lib/weaken.js";
 const growScript = "/lib/grow.js";
 const hackScript = "/lib/hack.js";
 
+
+export function autocomplete(data,) {
+    return [...data.servers];
+}
+
 export function main(ns: NS) {
     let target = ns.args[0] as string;
     let action = determineActionAndNeededThreads(ns, target);

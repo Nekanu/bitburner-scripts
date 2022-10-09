@@ -1,5 +1,10 @@
 import { NS } from "types/netscript";
 
+
+export function autocomplete(data,) {
+    return [...data.servers];
+}
+
 /**
  * @param {NS} ns
  * @arg {string} hostname
