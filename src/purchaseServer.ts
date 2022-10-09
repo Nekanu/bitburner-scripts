@@ -68,6 +68,7 @@ export async function main(ns: NS) {
         }
 
         ns.tprintf("WARNING -- Upgrading %s: %d GB -> %d GB!", serverName, serverRAM, ram);
+        ns.killall(serverName);
         ns.deleteServer(serverName);
         ns.purchaseServer(serverName, ram);
         return;
