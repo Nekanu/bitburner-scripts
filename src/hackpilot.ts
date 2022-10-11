@@ -86,7 +86,7 @@ export async function main(ns: NS) {
 
             //findAndExecuteScriptOnServers(ns, profitableServers[0][0], weakenScript, Number.MAX_VALUE);
             findAndExecuteScriptOnServers(ns, "", shareScript, Number.MAX_VALUE);
-            await ns.sleep(10000);
+            await ns.sleep(9500);
         }
 
         await ns.sleep(1000);
@@ -118,12 +118,12 @@ function findAndExecuteScriptOnServers(ns: NS, target: string, script: string, n
         let availableServerThreads = 0;
         if (server === "home") {
             // Let some ram free on the home server
-            availableServerThreads = Math.floor((ram[0] - 16) / scriptCost);
+            availableServerThreads = Math.floor((ram[0] - 10) / scriptCost);
         } else {
             availableServerThreads = Math.floor(ram[0] / scriptCost);
         }
 
-        totalAvailableThreads += availableServerThreads;
+        totalAvailableThreads += Math.max(availableServerThreads, 0);
 
         if (availableServerThreads > 0 && neededThreadsLeft > 0) {
             // Calculate the amount of threads to use on this server
