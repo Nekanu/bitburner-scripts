@@ -13,11 +13,16 @@ export function main(ns: NS) {
     let target = ns.args[0] as string;
     let action = determineActionAndNeededThreads(ns, target);
 
+    const formulasAvailable = ns.fileExists("Formulas.exe", "home");
+    const weakenTime = formulasAvailable ? timeToString(ns.formulas.hacking.weakenTime(ns.getServer(target), ns.getPlayer())) : undefined;
+    const growTime = formulasAvailable ? timeToString(ns.formulas.hacking.growTime(ns.getServer(target), ns.getPlayer())) : undefined;
+    const hackTime = formulasAvailable ? timeToString(ns.formulas.hacking.hackTime(ns.getServer(target), ns.getPlayer())) : undefined;
+
     ns.tprintf("%s:\n\tSecurity: %f <- %f\n\tMoney: %s / %s\n ", target, ns.getServerMinSecurityLevel(target), ns.getServerSecurityLevel(target), ns.nFormat(ns.getServerMoneyAvailable(target), "$0.000a"), ns.nFormat(ns.getServerMaxMoney(target), "$0.000a"));
 
-    ns.tprintf("Weaken: %d", calculateWeakenThreads(ns, target));
-    ns.tprintf("Grow: %d", calculateGrowThreads(ns, target));
-    ns.tprintf("Hack: %d", calculateHackThreads(ns, target, 0.75));
+    ns.tprintf("Weaken: %d (%s)", calculateWeakenThreads(ns, target), weakenTime ?? "unknown");
+    ns.tprintf("Grow: %d (%s)", calculateGrowThreads(ns, target), growTime ?? "unknown");
+    ns.tprintf("Hack: %d (%s)", calculateHackThreads(ns, target, 0.75), hackTime ?? "unknown");
     action.neededThreads;
     // ns.exec(action.script, target, action.neededThreads);
 }
@@ -83,4 +88,12 @@ function calculateGrowThreads(ns: NS, target: string) {
 function calculateHackThreads(ns: NS, target: string, percentage: number) {
     // Do only hack 75% of the money of this server to make sure we can re-grow it relatively easily
     return Math.ceil(ns.hackAnalyzeThreads(target, ns.getServerMoneyAvailable(target) * percentage));
+}
+
+function timeToString(time: number): string {
+    const hours = Math.floor(time / 3600000);
+    const minutes = Math.floor((time % 3600000) / 60000);
+    const seconds = Math.floor(((time % 3600000) % 60000) / 1000);
+
+    return `${hours}h ${minutes}m ${seconds}s`;
 }
