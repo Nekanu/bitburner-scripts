@@ -20,7 +20,7 @@ export async function main(ns: NS) {
         await determinePurchase(ns);
 
         // Prevent blocking
-        await ns.sleep(500);
+        await ns.sleep(100);
     }
 }
 
@@ -94,10 +94,10 @@ async function determinePurchase(ns: NS) {
 }
 
 async function tryLevelUpgrade(ns: NS, index: number, node: NodeStats) {
-    const levelUpgrade = checkPurchase(ns, ns.hacknet.getLevelUpgradeCost(index, 1));
-    if (levelUpgrade >= 0) {
-        ns.printf("%s -- Upgrading Node %i to level %i in %i seconds", new Date().toLocaleTimeString(), index, node.level + 1, levelUpgrade / 1000);
-        await ns.sleep(levelUpgrade);
+    const levelUpgradable = checkPurchase(ns, ns.hacknet.getLevelUpgradeCost(index, 1));
+    if (levelUpgradable >= 0) {
+        ns.printf("%s -- Upgrading Node %i to level %i in %i seconds", new Date().toLocaleTimeString(), index, node.level + 1, levelUpgradable / 1000);
+        await ns.sleep(levelUpgradable);
         ns.hacknet.upgradeLevel(index, 1);
         return true;
     }

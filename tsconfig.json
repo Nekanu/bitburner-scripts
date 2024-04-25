@@ -4,9 +4,9 @@
     ],
     "compilerOptions": {
         /* Basic Options */
-        "target": "ES2019",
+        "target": "ES2022",
         "lib": [
-            "ES2019",
+            "ES2022",
             "dom"
         ],
         "checkJs": false,
@@ -17,7 +17,7 @@
         "strictNullChecks": true,
         "allowJs": true,
         /* Additional Checks */
-        "noUnusedLocals": true,
+        "noUnusedLocals": false,
         "noUnusedParameters": true,
         "noImplicitReturns": false,
         "noFallthroughCasesInSwitch": false,

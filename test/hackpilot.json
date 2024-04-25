@@ -1,0 +1,719 @@
+[
+    [
+        "b-and-a",
+        {
+            "target": "b-and-a",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "omnitek",
+        {
+            "target": "omnitek",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "global-pharm",
+        {
+            "target": "global-pharm",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [
+                60
+            ],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "deltaone",
+        {
+            "target": "deltaone",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "zeus-med",
+        {
+            "target": "zeus-med",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "nova-med",
+        {
+            "target": "nova-med",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [
+                61
+            ],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "univ-energy",
+        {
+            "target": "univ-energy",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [
+                62
+            ],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "stormtech",
+        {
+            "target": "stormtech",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "unitalife",
+        {
+            "target": "unitalife",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [
+                63
+            ],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "aerocorp",
+        {
+            "target": "aerocorp",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "icarus",
+        {
+            "target": "icarus",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "zb-institute",
+        {
+            "target": "zb-institute",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "omnia",
+        {
+            "target": "omnia",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "zb-def",
+        {
+            "target": "zb-def",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [
+                64
+            ],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "defcomm",
+        {
+            "target": "defcomm",
+            "action": 0,
+            "state": 0,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "solaris",
+        {
+            "target": "solaris",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "applied-energetics",
+        {
+            "target": "applied-energetics",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [
+                65
+            ],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "infocomm",
+        {
+            "target": "infocomm",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "taiyang-digital",
+        {
+            "target": "taiyang-digital",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "galactic-cyber",
+        {
+            "target": "galactic-cyber",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "lexo-corp",
+        {
+            "target": "lexo-corp",
+            "action": 2,
+            "state": 1,
+            "monitorPids": [
+                577,
+                580,
+                583,
+                585
+            ],
+            "threadsNeeded": 1776
+        }
+    ],
+    [
+        "titan-labs",
+        {
+            "target": "titan-labs",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "vitalife",
+        {
+            "target": "vitalife",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "alpha-ent",
+        {
+            "target": "alpha-ent",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [
+                524,
+                527,
+                530
+            ],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "helios",
+        {
+            "target": "helios",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "rho-construction",
+        {
+            "target": "rho-construction",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [
+                543
+            ],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "microdyne",
+        {
+            "target": "microdyne",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "syscore",
+        {
+            "target": "syscore",
+            "action": 2,
+            "state": 1,
+            "monitorPids": [
+                551,
+                553,
+                556,
+                571,
+                574
+            ],
+            "threadsNeeded": 857
+        }
+    ],
+    [
+        "snap-fitness",
+        {
+            "target": "snap-fitness",
+            "action": 2,
+            "state": 1,
+            "monitorPids": [
+                537,
+                539,
+                544,
+                546
+            ],
+            "threadsNeeded": 742
+        }
+    ],
+    [
+        "catalyst",
+        {
+            "target": "catalyst",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [
+                531
+            ],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "netlink",
+        {
+            "target": "netlink",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [
+                460
+            ],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "aevum-police",
+        {
+            "target": "aevum-police",
+            "action": 2,
+            "state": 1,
+            "monitorPids": [
+                461,
+                464,
+                466,
+                472,
+                473,
+                474,
+                475,
+                476,
+                477,
+                478,
+                479,
+                480,
+                481,
+                482,
+                483,
+                484,
+                485,
+                486,
+                487,
+                489,
+                492,
+                494,
+                496,
+                501,
+                502,
+                503,
+                504,
+                505,
+                506,
+                507,
+                508,
+                509,
+                510,
+                511,
+                512,
+                513,
+                514,
+                515,
+                516,
+                517,
+                518,
+                521,
+                532,
+                534
+            ],
+            "threadsNeeded": 94
+        }
+    ],
+    [
+        "summit-uni",
+        {
+            "target": "summit-uni",
+            "action": 2,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 3145
+        }
+    ],
+    [
+        "millenium-fitness",
+        {
+            "target": "millenium-fitness",
+            "action": 2,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 4447
+        }
+    ],
+    [
+        "computek",
+        {
+            "target": "computek",
+            "action": 2,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 3431
+        }
+    ],
+    [
+        "rothman-uni",
+        {
+            "target": "rothman-uni",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [
+                292,
+                294,
+                305
+            ],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "the-hub",
+        {
+            "target": "the-hub",
+            "action": 1,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 452
+        }
+    ],
+    [
+        "johnson-ortho",
+        {
+            "target": "johnson-ortho",
+            "action": 1,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 1300
+        }
+    ],
+    [
+        "omega-net",
+        {
+            "target": "omega-net",
+            "action": 1,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 700
+        }
+    ],
+    [
+        "crush-fitness",
+        {
+            "target": "crush-fitness",
+            "action": 1,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 1020
+        }
+    ],
+    [
+        "silver-helix",
+        {
+            "target": "silver-helix",
+            "action": 1,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 800
+        }
+    ],
+    [
+        "phantasy",
+        {
+            "target": "phantasy",
+            "action": 1,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 540
+        }
+    ],
+    [
+        "iron-gym",
+        {
+            "target": "iron-gym",
+            "action": 2,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 3775
+        }
+    ],
+    [
+        "max-hardware",
+        {
+            "target": "max-hardware",
+            "action": 2,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 1259
+        }
+    ],
+    [
+        "zer0",
+        {
+            "target": "zer0",
+            "action": 2,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 1605
+        }
+    ],
+    [
+        "neo-net",
+        {
+            "target": "neo-net",
+            "action": 2,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 2567
+        }
+    ],
+    [
+        "harakiri-sushi",
+        {
+            "target": "harakiri-sushi",
+            "action": 2,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 945
+        }
+    ],
+    [
+        "hong-fang-tea",
+        {
+            "target": "hong-fang-tea",
+            "action": 2,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 1889
+        }
+    ],
+    [
+        "nectar-net",
+        {
+            "target": "nectar-net",
+            "action": 2,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 1964
+        }
+    ],
+    [
+        "joesguns",
+        {
+            "target": "joesguns",
+            "action": 2,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 1889
+        }
+    ],
+    [
+        "sigma-cosmetics",
+        {
+            "target": "sigma-cosmetics",
+            "action": 3,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 228
+        }
+    ],
+    [
+        "foodnstuff",
+        {
+            "target": "foodnstuff",
+            "action": 1,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 173
+        }
+    ],
+    [
+        "n00dles",
+        {
+            "target": "n00dles",
+            "action": 3,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 213
+        }
+    ],
+    [
+        "powerhouse-fitness",
+        {
+            "target": "powerhouse-fitness",
+            "action": 0,
+            "state": 0,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "ecorp",
+        {
+            "target": "ecorp",
+            "action": 0,
+            "state": 0,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "megacorp",
+        {
+            "target": "megacorp",
+            "action": 0,
+            "state": 0,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "blade",
+        {
+            "target": "blade",
+            "action": 0,
+            "state": 0,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "kuai-gong",
+        {
+            "target": "kuai-gong",
+            "action": 0,
+            "state": 1,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "nwo",
+        {
+            "target": "nwo",
+            "action": 0,
+            "state": 0,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "4sigma",
+        {
+            "target": "4sigma",
+            "action": 0,
+            "state": 0,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "clarkinc",
+        {
+            "target": "clarkinc",
+            "action": 0,
+            "state": 0,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "fulcrumtech",
+        {
+            "target": "fulcrumtech",
+            "action": 0,
+            "state": 0,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ],
+    [
+        "fulcrumassets",
+        {
+            "target": "fulcrumassets",
+            "action": 0,
+            "state": 0,
+            "monitorPids": [],
+            "threadsNeeded": 0
+        }
+    ]
+]

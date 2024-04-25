@@ -8,8 +8,8 @@ export async function main(ns: NS) {
 
     // If no arguments are given, print the prices of each RAM size (64 GB -> 1 PB)
     if (ns.args.length < 1) {
-        let ram = 64;
-        while (ram <= 2 ** 20) {
+        let ram = 32;
+        while (ram <= 2 ** 19) {
             const purchaseCost = ns.getPurchasedServerCost(ram);
 
             if (purchaseCost < playerMoney) {

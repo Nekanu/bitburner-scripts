@@ -1,0 +1,137 @@
+[
+    {
+        "faction": "Daedalus",
+        "currentFavor": 0,
+        "currentReputation": 5207.85787063874,
+        "reputationNeededForAllAugmentations": 2500000,
+        "reputationNeededToDonate": 462490.0692,
+        "reputationNeeded": 457282.2113293613,
+        "workSecondsNeeded": {}
+    },
+    {
+        "faction": "BitRunners",
+        "currentFavor": 218.35,
+        "currentReputation": 97092.05202901398,
+        "reputationNeededForAllAugmentations": 0,
+        "reputationNeededToDonate": 462490.0692,
+        "reputationNeeded": -97092.05202901398,
+        "workSecondsNeeded": {}
+    },
+    {
+        "faction": "The Black Hand",
+        "currentFavor": 160.9761,
+        "currentReputation": 83202.46431632081,
+        "reputationNeededForAllAugmentations": 0,
+        "reputationNeededToDonate": 462490.0692,
+        "reputationNeeded": -83202.46431632081,
+        "workSecondsNeeded": {}
+    },
+    {
+        "faction": "NiteSec",
+        "currentFavor": 166.1269,
+        "currentReputation": 84000.68935289448,
+        "reputationNeededForAllAugmentations": 0,
+        "reputationNeededToDonate": 462490.0692,
+        "reputationNeeded": -84000.68935289448,
+        "workSecondsNeeded": {}
+    },
+    {
+        "faction": "Chongqing",
+        "currentFavor": 46.6598,
+        "currentReputation": 28270.46857458511,
+        "reputationNeededForAllAugmentations": 0,
+        "reputationNeededToDonate": 462490.0692,
+        "reputationNeeded": -28270.46857458511,
+        "workSecondsNeeded": {}
+    },
+    {
+        "faction": "Ishima",
+        "currentFavor": 15.3745,
+        "currentReputation": 11371.553488190979,
+        "reputationNeededForAllAugmentations": 0,
+        "reputationNeededToDonate": 462490.0692,
+        "reputationNeeded": -11371.553488190979,
+        "workSecondsNeeded": {}
+    },
+    {
+        "faction": "New Tokyo",
+        "currentFavor": 14.3754,
+        "currentReputation": 12745.827859432977,
+        "reputationNeededForAllAugmentations": 0,
+        "reputationNeededToDonate": 462490.0692,
+        "reputationNeeded": -12745.827859432977,
+        "workSecondsNeeded": {}
+    },
+    {
+        "faction": "Speakers for the Dead",
+        "currentFavor": 0,
+        "currentReputation": 42419.190816007045,
+        "reputationNeededForAllAugmentations": 750000,
+        "reputationNeededToDonate": 462490.0692,
+        "reputationNeeded": 420070.878383993,
+        "workSecondsNeeded": {}
+    },
+    {
+        "faction": "The Dark Army",
+        "currentFavor": 0,
+        "currentReputation": 1348.1966322764808,
+        "reputationNeededForAllAugmentations": 500000,
+        "reputationNeededToDonate": 462490.0692,
+        "reputationNeeded": 461141.87256772356,
+        "workSecondsNeeded": {}
+    },
+    {
+        "faction": "The Syndicate",
+        "currentFavor": 100.2842,
+        "currentReputation": 42051.45230593468,
+        "reputationNeededForAllAugmentations": 875000,
+        "reputationNeededToDonate": 462490.0692,
+        "reputationNeeded": 420438.61689406534,
+        "workSecondsNeeded": {}
+    },
+    {
+        "faction": "Tetrads",
+        "currentFavor": 84.1911,
+        "currentReputation": 53424.76410430702,
+        "reputationNeededForAllAugmentations": 0,
+        "reputationNeededToDonate": 462490.0692,
+        "reputationNeeded": -53424.76410430702,
+        "workSecondsNeeded": {}
+    },
+    {
+        "faction": "Slum Snakes",
+        "currentFavor": 112.3816,
+        "currentReputation": 66064.70960579938,
+        "reputationNeededForAllAugmentations": 0,
+        "reputationNeededToDonate": 462490.0692,
+        "reputationNeeded": -66064.70960579938,
+        "workSecondsNeeded": {}
+    },
+    {
+        "faction": "Tian Di Hui",
+        "currentFavor": 105.0579,
+        "currentReputation": 68495.57903951396,
+        "reputationNeededForAllAugmentations": 0,
+        "reputationNeededToDonate": 462490.0692,
+        "reputationNeeded": -68495.57903951396,
+        "workSecondsNeeded": {}
+    },
+    {
+        "faction": "CyberSec",
+        "currentFavor": 159.0779,
+        "currentReputation": 87230.65621656802,
+        "reputationNeededForAllAugmentations": 0,
+        "reputationNeededToDonate": 462490.0692,
+        "reputationNeeded": -87230.65621656802,
+        "workSecondsNeeded": {}
+    },
+    {
+        "faction": "Shadows of Anarchy",
+        "currentFavor": 46.7154,
+        "currentReputation": 2836.0379905992954,
+        "reputationNeededForAllAugmentations": 48268.09000000001,
+        "reputationNeededToDonate": 462490.0692,
+        "reputationNeeded": 45432.052009400715,
+        "workSecondsNeeded": {}
+    }
+]

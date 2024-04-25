@@ -2,15 +2,15 @@
 import { NS } from "types/netscript";
 import { ITraversalFunction, Traversal, TraversalContext } from "types/traversal";
 import { getRamMapping } from "types/ramMapping";
-import { findAndExecuteScriptOnServers } from "/lib/helpers";
-import { reserveHomeRamGb, tempFolder } from "/lib/constants";
 
 const weakenScript = "/lib/weaken.js";
 const growScript = "/lib/grow.js";
 const hackScript = "/lib/hack.js";
 const shareScript = "/lib/share.js";
 
-const persistStatusFile = `${tempFolder}/hackpilot.txt"`;
+const persistStatusFile = "/tmp/hackpilot.txt";
+
+const freeHomeRamInGB = 16;
 
 let status = new Map<string, HackStatus>();
 let profitableServers: [string, number][] = [];
@@ -76,7 +76,7 @@ export async function main(ns: NS) {
             }
 
             ramMapping = getRamMapping(ns, ["home"]);
-            if (ramMapping.totalRamFree > reserveHomeRamGb) {
+            if (ramMapping.totalRamFree > freeHomeRamInGB) {
                 status.get(server)!.performAction(ns);
             }
         }
@@ -88,8 +88,8 @@ export async function main(ns: NS) {
         if (ramMapping.totalRamFree > 20000) {
 
             //findAndExecuteScriptOnServers(ns, profitableServers[0][0], weakenScript, Number.MAX_VALUE);
-            findAndExecuteScriptOnServers(ns, "", shareScript, Number.MAX_VALUE, reserveHomeRamGb, false);
-            await ns.sleep(5300);
+            findAndExecuteScriptOnServers(ns, "", shareScript, Number.MAX_VALUE);
+            await ns.sleep(5500);
         }
 
         // Check for new contracts
@@ -97,6 +97,79 @@ export async function main(ns: NS) {
 
         await ns.sleep(5000);
     }
+}
+
+/**
+ * Finds servers to run a script on and executes the script on them
+ * 
+ * @param {NS} ns
+ * @param {string} target The target server needed for the script
+ * @param {string} script The script to run
+ * @param {number} neededThreads The amount of threads needed for maximum efficiency
+ * @returns {[number, number][]} The pid of the script and the amount of threads used for each server
+ */
+function findAndExecuteScriptOnServers(ns: NS, target: string, script: string, neededThreads: number): [number, number][] {
+
+    // Get the free ram mapping
+    const ramMapping = getRamMapping(ns, []);
+
+    const scriptCost = ns.getScriptRam(script);
+    let totalAvailableThreads = 0;
+    let neededThreadsLeft = neededThreads;
+    const threadMap = new Map<string, number>();
+
+    // Generate a map containing the amount of threads to perform on each server
+    ramMapping.ramMap.forEach((ram, server) => {
+
+        let availableServerThreads = 0;
+        if (server === "home") {
+            // Let some ram free on the home server
+            availableServerThreads = Math.floor((ram.ramFree - freeHomeRamInGB) / scriptCost);
+        } else {
+            availableServerThreads = Math.floor(ram.ramFree / scriptCost);
+        }
+
+        totalAvailableThreads += Math.max(availableServerThreads, 0);
+
+        if (availableServerThreads > 0 && neededThreadsLeft > 0) {
+            // Calculate the amount of threads to use on this server
+            let threads = Math.min(availableServerThreads, neededThreadsLeft);
+
+            threadMap.set(server, threads);
+            neededThreadsLeft -= threads;
+        }
+    });
+
+    // If there are no threads available, return
+    if (totalAvailableThreads == 0) {
+        return [];
+    }
+
+    let pids: [number, number][] = [];
+
+    // Execute the script on the servers as specified in the threadMap
+    for (const [server, threads] of threadMap) {
+        // Copy the script to the server
+        ns.scp(script, server);
+
+        // Execute the script
+        let pid = ns.exec(script, server, threads, target, threads, 0);
+
+        // Push all successful started processes specified by their to the array
+        if (pid > 0) {
+            pids.push([pid, threads]);
+        }
+    }
+
+    // Print information about the script execution, only if it is not the share script
+    if (script !== shareScript) {
+        let threadsStarted = pids.reduce((prev, [, threads]) => prev + threads, 0);
+        ns.printf("%s -- %-4s -> %-18s (%d / %d => %d)", new Date().toLocaleTimeString(), 
+            script.split("/")[2].slice(0,4), // Ugly way to get the shortened script name
+            target, totalAvailableThreads, neededThreads, threadsStarted);
+    }
+
+    return pids;
 }
 
 /**
@@ -198,16 +271,15 @@ function sortServersAfterProfit(ns: NS) {
                 return 1;
             }
 
-            // Do not permanently resort the list of running hacks to avoid long waits
-            return 0;
+            const progressionA = (ns.getServerMoneyAvailable(a[0]) / ns.getServerMaxMoney(a[0])) 
+                - (ns.getServerSecurityLevel(a[0]) / ns.getServerMinSecurityLevel(a[0]));
+            const progressionB = (ns.getServerMoneyAvailable(b[0]) / ns.getServerMaxMoney(b[0])) 
+                - (ns.getServerSecurityLevel(b[0]) / ns.getServerMinSecurityLevel(b[0]));
+
+            return progressionB - progressionA;
         }
 
-        const progressionA = (ns.getServerMoneyAvailable(a[0]) / ns.getServerMaxMoney(a[0])) 
-            - (ns.getServerSecurityLevel(a[0]) / ns.getServerMinSecurityLevel(a[0]));
-        const progressionB = (ns.getServerMoneyAvailable(b[0]) / ns.getServerMaxMoney(b[0])) 
-            - (ns.getServerSecurityLevel(b[0]) / ns.getServerMinSecurityLevel(b[0]));
-
-        return progressionB - progressionA;
+        return b[1] - a[1];
     });
 }
 
@@ -228,23 +300,21 @@ class HackStatus {
      * Performs the action specified by this status to best ability
      */
     public performAction(ns: NS) {
+        this.state = HackState.Running;
+
         let newPids: [number, number][] = [];
         switch (this.action) {
             case HackAction.None:
                 return;
             case HackAction.Weaken:
-                newPids = findAndExecuteScriptOnServers(ns, this.target, weakenScript, this.threadsNeeded, reserveHomeRamGb);
+                newPids = findAndExecuteScriptOnServers(ns, this.target, weakenScript, this.threadsNeeded);
                 break;
             case HackAction.Grow:
-                newPids = findAndExecuteScriptOnServers(ns, this.target, growScript, this.threadsNeeded, reserveHomeRamGb);
+                newPids = findAndExecuteScriptOnServers(ns, this.target, growScript, this.threadsNeeded);
                 break;
             case HackAction.Hack:
-                newPids = findAndExecuteScriptOnServers(ns, this.target, hackScript, this.threadsNeeded, reserveHomeRamGb);
+                newPids = findAndExecuteScriptOnServers(ns, this.target, hackScript, this.threadsNeeded);
                 break;
-        }
-
-        if (newPids.length > 0) {
-            this.state = HackState.Running;
         }
 
         // Add the new pids to the monitor list and adjust the threads needed
@@ -340,3 +410,32 @@ enum HackState {
     Waiting,
     Running
 }
+
+const prevSortFunction = (a, b) => {
+    let stateA: HackStatus | undefined = status.get(a[0]);
+    let stateB: HackStatus | undefined = status.get(b[0]);
+
+    // Prefer strongly running hacks
+    if (stateA?.state !== stateB?.state) {
+
+        if (stateA?.state === HackState.Running) {
+            return -1;
+        }
+        else if (stateB?.state === HackState.Running) {
+            return 1;
+        }
+    }
+
+    // Prefer later stages of hacks (weaken -> grow -> hack)
+    if (stateA?.state === HackState.Running && stateB?.state === HackState.Running) {
+
+        // If at the same stage, sort by least amount of threads needed
+        if (stateA?.action ===  stateB?.action) {
+            return stateA?.threadsNeeded! - stateB?.threadsNeeded!;
+        }
+
+        return stateB?.action! - stateA?.action!;
+    }
+
+    return b[1] - a[1];
+};

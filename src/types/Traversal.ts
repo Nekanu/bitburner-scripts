@@ -8,9 +8,9 @@ export class TraversalContext {
     public readonly traversal: Traversal;
     public readonly hostname: string;
     public readonly distanceFromStart: number;
-    public readonly parent: TraversalContext | null;
+    public readonly parent: TraversalContext | undefined;
 
-    constructor(traversal: Traversal, parentContext: TraversalContext | null, hostname: string, distanceFromStart: number) {
+    constructor(traversal: Traversal, parentContext: TraversalContext | undefined, hostname: string, distanceFromStart: number) {
         this.traversal = traversal;
         this.hostname = hostname;
         this.distanceFromStart = distanceFromStart;
@@ -31,10 +31,10 @@ export class Traversal {
     }
 
     public start(ns: NS, hostname: string, traversalFunctionArgs?: any) {
-        this.traverseNode(null, ns, hostname, 0, traversalFunctionArgs);
+        this.traverseNode(undefined, ns, hostname, 0, traversalFunctionArgs);
     }
 
-    private traverseNode(parentContext: TraversalContext | null, ns: NS, hostname: string, depth: number, traversalFunctionArgs?: any) {
+    private traverseNode(parentContext: TraversalContext | undefined, ns: NS, hostname: string, depth: number, traversalFunctionArgs?: any) {
         // Disallow backtracking
         this.traversedServers.push(hostname);
 
@@ -54,27 +54,3 @@ export class Traversal {
     }
 }
 
-export function getRamMapping(ns: NS, exclusions: string[] = []): { total: [number, number], ramMapping: Map<string, [number, number]> } {
-
-    const result = {
-        total: [0, 0] as [number, number],
-        ramMapping: new Map<string, [number, number]>()
-    };
-
-    new Traversal((ns: NS, context: TraversalContext, args: { total: [number, number], ramMapping: Map<string, [number, number]> }) => {
-        const server = context.hostname;
-
-        if (!ns.hasRootAccess(server)) return;
-
-        const maxRam = ns.getServerMaxRam(server);
-
-        const freeRAM = maxRam - ns.getServerUsedRam(server);
-
-        args.total[0] += freeRAM;
-        args.total[1] += maxRam;
-        args.ramMapping.set(server, [freeRAM, maxRam]);
-    }, false, exclusions)
-        .start(ns, "home", result);
-
-    return result;
-}
