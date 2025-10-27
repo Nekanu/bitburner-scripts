@@ -1,4 +1,4 @@
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 import { ScheduleList } from "types/scheduling";
 
 const schedule: ScheduleList = new ScheduleList();

@@ -1,5 +1,5 @@
 import { ITraversalFunction, Traversal } from "types/traversal";
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 import { getRamMapping } from "types/ramMapping";
 
 export function executeOnAllServers(ns: NS, func: ITraversalFunction, suppressOutput: boolean) {
@@ -76,8 +76,8 @@ export function findAndExecuteScriptOnServers(ns: NS, target: string, script: st
     // Print information about the script execution, only if it is not the share script
     if (outputEnabled) {
         let threadsStarted = pids.reduce((prev, [, threads]) => prev + threads, 0);
-        ns.printf("%s -- %-4s -> %-18s (%d / %d => %d)", new Date().toLocaleTimeString(), 
-            script.split("/")[2].slice(0,4), // Ugly way to get the shortened script name
+        ns.printf("%s -- %-4s -> %-18s (%d / %d => %d)", new Date().toLocaleTimeString(),
+            script.split("/")[2].slice(0, 4), // Ugly way to get the shortened script name
             target, totalAvailableThreads, threads, threadsStarted);
     }
 

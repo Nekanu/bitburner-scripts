@@ -1,4 +1,4 @@
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 import { Traversal, TraversalContext } from "types/traversal";
 
 export class RamMapping {

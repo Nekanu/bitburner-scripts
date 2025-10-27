@@ -1,4 +1,4 @@
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 import { Traversal, TraversalContext } from "types/traversal";
 import { findAndExecuteScriptOnServers } from "lib/helpers";
 import { reserveHomeRamGb } from "lib/constants";
@@ -20,7 +20,7 @@ const profitSortFunction = (a: ServerHackStatus, b: ServerHackStatus) => {
 
     // strongly prefer running hacks
     if (a.state !== b.state) {
-    
+
         if (a.state === ServerHackState.Running) {
             return -1;
         }
@@ -30,7 +30,7 @@ const profitSortFunction = (a: ServerHackStatus, b: ServerHackStatus) => {
     }
 
     // Prefer later stages of hacks (weaken -> grow -> hack)
-    if (a.state === ServerHackState.Running && b.state === ServerHackState.Running) {            
+    if (a.state === ServerHackState.Running && b.state === ServerHackState.Running) {
         const progressionA = ((a.currentMoney / a.maxMoney) + (a.minSecurityLevel / a.currentSecurityLevel)) / 2;
         const progressionB = ((b.currentMoney / b.maxMoney) + (b.minSecurityLevel / b.currentSecurityLevel)) / 2;
 
@@ -263,7 +263,7 @@ export class ServerHackStatus {
     */
     public update(ns: NS) {
         this.monitorPids = this.monitorPids.filter(pid => ns.isRunning(pid));
-        
+
         this.currentMoney = ns.getServerMoneyAvailable(this.target);
         this.currentSecurityLevel = ns.getServerSecurityLevel(this.target);
 

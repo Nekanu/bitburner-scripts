@@ -1,4 +1,4 @@
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 import { convertToHumanReadable } from "lib/helpers";
 
 export async function main(ns: NS) {

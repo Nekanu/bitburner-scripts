@@ -1,4 +1,4 @@
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 
 /**
  * @param {NS} ns

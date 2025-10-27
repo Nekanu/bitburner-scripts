@@ -1,4 +1,4 @@
-import { NS } from "./types/netscript";
+import { NS } from "@ns";
 
 let factionServers = ["CSEC", "avmnite-02h", "I.I.I.I", "run4theh111z", "w0r1d_d43m0n"];
 let css = `<style id="scanCSS">

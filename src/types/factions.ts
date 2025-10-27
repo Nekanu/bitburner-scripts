@@ -1,4 +1,4 @@
-import { FactionWorkType, NS } from "types/netscript";
+import { FactionWorkType, NS } from "@ns";
 
 export const factionExclusiveAugmentations = {
     "Aevum": ["PCMatrix"],
@@ -47,9 +47,9 @@ export class FactionWorkStats {
 
         this.reputationNeededForExclusiveAugmentations = ns.singularity.getAugmentationsFromFaction(faction)
             .filter(a => !ns.singularity.getOwnedAugmentations(true).includes(a))
-            //.filter(a => factionExclusiveAugmentations[faction].includes(a))
+            .filter(a => factionExclusiveAugmentations[faction].includes(a))
             .reduce((a, b, _) => Math.max(a, ns.singularity.getAugmentationRepReq(b)), 0);
-            
+
         this.reputationNeededToDonate = ns.formulas.reputation.calculateFavorToRep(ns.getFavorToDonate());
         this.reputationNeeded = Math.min(this.reputationNeededForAllAugmentations, this.reputationNeededToDonate);
         this.donationNeeded = this.reputationNeededToDonate < this.reputationNeededForAllAugmentations;
@@ -58,7 +58,7 @@ export class FactionWorkStats {
     public update(ns: NS) {
         this.currentFavor = ns.singularity.getFactionFavor(this.faction);
         this.currentReputation = ns.singularity.getFactionRep(this.faction);
-        this.reputationNeeded = Math.min(this.reputationNeededForAllAugmentations, this.reputationNeededToDonate) 
+        this.reputationNeeded = Math.min(this.reputationNeededForAllAugmentations, this.reputationNeededToDonate)
             - this.currentReputation
             - (this.donationNeeded ? ns.formulas.reputation.calculateFavorToRep(this.currentFavor) : 0);
     }

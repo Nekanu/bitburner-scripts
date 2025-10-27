@@ -1,4 +1,4 @@
-import {NS} from "types/netscript";
+import { NS } from "@ns";
 
 const argumentSchema = [
 

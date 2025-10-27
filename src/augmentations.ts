@@ -1,5 +1,5 @@
 import { factionExclusiveAugmentations, preventingFactions } from "types/factions";
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 
 
 

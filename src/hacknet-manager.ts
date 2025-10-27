@@ -1,4 +1,4 @@
-import { NodeStats, NS } from "types/netscript";
+import { NodeStats, NS } from "@ns";
 
 const maxSecondsWaitingMultiplier = 1;
 const playerMinimumMoney = 0;

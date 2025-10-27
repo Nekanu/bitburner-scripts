@@ -7,7 +7,7 @@
  * Last updated: 2021-08-01
  */
 
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 
 /**
  * @param {NS} ns

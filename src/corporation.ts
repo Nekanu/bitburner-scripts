@@ -1,4 +1,4 @@
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 
 const setupDivision = "Agriculture";
 
@@ -18,7 +18,7 @@ async function setup(ns: NS) {
     ns.corporation.expandIndustry(setupDivision, setupDivision);
     ns.corporation.purchaseUnlock("Smart Supply");
     ns.corporation.hireAdVert(setupDivision);
-    
+
     ns.corporation.getConstants().upgradeNames.forEach(upgrade => {
         if (upgrade === "Project Insight") return;
         if (upgrade === "Smart Storage") return;
@@ -31,7 +31,7 @@ async function setup(ns: NS) {
     });
 
     for (const [_, city] of Object.entries(ns.enums.CityName)) {
-        
+
 
         try {
             ns.corporation.expandCity(setupDivision, city);
@@ -69,7 +69,7 @@ async function setup(ns: NS) {
 
     if (!skipMoraleEnergy) {
         await topUpEnergyMorale(ns);
-        
+
         // Wait until we have a good offer
         while (ns.corporation.getInvestmentOffer().funds < 81000000000) {
             await ns.corporation.nextUpdate();

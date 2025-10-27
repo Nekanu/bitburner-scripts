@@ -1,5 +1,5 @@
 
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 import { ITraversalFunction, Traversal, TraversalContext } from "types/traversal";
 import { getRamMapping } from "types/ramMapping";
 
@@ -38,7 +38,7 @@ export async function main(ns: NS) {
     let hackingLevel = 0;
 
     let pidsRead = 0;
-    status.forEach((hackStatus,) => {pidsRead += hackStatus.monitorPids.length;});
+    status.forEach((hackStatus,) => { pidsRead += hackStatus.monitorPids.length; });
     ns.tprintf("Read %d servers with %d PIDs to monitor", status.size, pidsRead);
 
     // Perform initial escalation
@@ -164,8 +164,8 @@ function findAndExecuteScriptOnServers(ns: NS, target: string, script: string, n
     // Print information about the script execution, only if it is not the share script
     if (script !== shareScript) {
         let threadsStarted = pids.reduce((prev, [, threads]) => prev + threads, 0);
-        ns.printf("%s -- %-4s -> %-18s (%d / %d => %d)", new Date().toLocaleTimeString(), 
-            script.split("/")[2].slice(0,4), // Ugly way to get the shortened script name
+        ns.printf("%s -- %-4s -> %-18s (%d / %d => %d)", new Date().toLocaleTimeString(),
+            script.split("/")[2].slice(0, 4), // Ugly way to get the shortened script name
             target, totalAvailableThreads, neededThreads, threadsStarted);
     }
 
@@ -271,9 +271,9 @@ function sortServersAfterProfit(ns: NS) {
                 return 1;
             }
 
-            const progressionA = (ns.getServerMoneyAvailable(a[0]) / ns.getServerMaxMoney(a[0])) 
+            const progressionA = (ns.getServerMoneyAvailable(a[0]) / ns.getServerMaxMoney(a[0]))
                 - (ns.getServerSecurityLevel(a[0]) / ns.getServerMinSecurityLevel(a[0]));
-            const progressionB = (ns.getServerMoneyAvailable(b[0]) / ns.getServerMaxMoney(b[0])) 
+            const progressionB = (ns.getServerMoneyAvailable(b[0]) / ns.getServerMaxMoney(b[0]))
                 - (ns.getServerSecurityLevel(b[0]) / ns.getServerMinSecurityLevel(b[0]));
 
             return progressionB - progressionA;
@@ -430,7 +430,7 @@ const prevSortFunction = (a, b) => {
     if (stateA?.state === HackState.Running && stateB?.state === HackState.Running) {
 
         // If at the same stage, sort by least amount of threads needed
-        if (stateA?.action ===  stateB?.action) {
+        if (stateA?.action === stateB?.action) {
             return stateA?.threadsNeeded! - stateB?.threadsNeeded!;
         }
 

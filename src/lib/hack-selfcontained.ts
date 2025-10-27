@@ -1,4 +1,4 @@
-import { NS } from "../types/netscript";
+import { NS } from "@ns";
 
 /* A simple lightweight script that is deployed
  * to remote and local servers to repeatedly hack

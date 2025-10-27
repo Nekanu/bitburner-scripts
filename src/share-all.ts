@@ -1,4 +1,4 @@
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 import { getRamMapping } from "types/ramMapping";
 
 
@@ -88,8 +88,8 @@ function findAndExecuteScriptOnServers(ns: NS, target: string, script: string, n
     // Print information about the script execution, only if it is not the share script
     if (script !== shareScript) {
         let threadsStarted = pids.reduce((prev, [, threads]) => prev + threads, 0);
-        ns.printf("%s -- %-4s -> %-18s (%d / %d => %d)", new Date().toLocaleTimeString(), 
-            script.split("/")[2].slice(0,4), // Ugly way to get the shortened script name
+        ns.printf("%s -- %-4s -> %-18s (%d / %d => %d)", new Date().toLocaleTimeString(),
+            script.split("/")[2].slice(0, 4), // Ugly way to get the shortened script name
             target, totalAvailableThreads, neededThreads, threadsStarted);
     }
 

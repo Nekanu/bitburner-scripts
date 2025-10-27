@@ -1,4 +1,4 @@
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 import { FactionWorkStats } from "types/factions";
 import { tempFolder } from "./lib/constants";
 
@@ -46,7 +46,7 @@ export async function main(ns: NS) {
         const timeNeededInSecondsHacking = stats.reputationNeeded / workPerSecHacking;
         const timeNeededInSecondsField = stats.reputationNeeded / workPerSecField;
         const timeNeededInSecondsSecurity = stats.reputationNeeded / workPerSecSecurity;
-        
+
         ns.tprintf(`%s -- %d reputation needed (Current Favor: %d):`, faction, stats.reputationNeeded, stats.currentFavor);
         ns.tprintf("\tHacking  (%.3f rep/s): %s", workPerSecHacking, formatTimeSeconds(timeNeededInSecondsHacking));
         ns.tprintf("\tField    (%.3f rep/s): %s", workPerSecField, formatTimeSeconds(timeNeededInSecondsField));
@@ -60,5 +60,5 @@ export async function main(ns: NS) {
 }
 
 function formatTimeSeconds(seconds: number): string {
-    return `${Math.floor(seconds/3600)}h ${Math.floor((seconds/60)%60)}m ${Math.floor(seconds%60)}s`;
+    return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds / 60) % 60)}m ${Math.floor(seconds % 60)}s`;
 }

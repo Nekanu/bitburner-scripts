@@ -1,4 +1,4 @@
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 
 const weakenScript = "/lib/weaken.js";
 const growScript = "/lib/grow.js";

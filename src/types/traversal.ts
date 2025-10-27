@@ -1,4 +1,4 @@
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 
 export interface ITraversalFunction extends Function {
     (ns: NS, traversalContext: TraversalContext, args?: any): void;

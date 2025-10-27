@@ -1,4 +1,4 @@
-import { NS } from "./types/netscript";
+import { NS } from "@ns";
 import { Traversal, ITraversalFunction, TraversalContext } from "./types/traversal";
 
 const killScripts: ITraversalFunction = (ns: NS, traversalContext: TraversalContext) => {

@@ -1,43 +1,35 @@
 {
-    "include": [
-        "src/**/*",
-    ],
-    "compilerOptions": {
-        /* Basic Options */
-        "target": "ES2022",
-        "lib": [
-            "ES2022",
-            "dom"
-        ],
-        "checkJs": false,
-        "jsx": "preserve",
-        /* Strict Type-Checking Options */
-        "strict": true,
-        "noImplicitAny": false,
-        "strictNullChecks": true,
-        "allowJs": true,
-        /* Additional Checks */
-        "noUnusedLocals": false,
-        "noUnusedParameters": true,
-        "noImplicitReturns": false,
-        "noFallthroughCasesInSwitch": false,
-        /* Module Resolution Options */
-        "rootDir": "./src/",
-        "baseUrl": "./src/",
-        "paths": {
-            /* Support absolute /lib/* with a leading '/' */
-            "/lib/*": [
-                "lib/*"
-            ],
-            /* Support absolute /definitions/* with a leading '/' */
-            "/definitions/*": [
-                "definitions/*"
-            ]
-        },
-        "moduleResolution": "node",
-        "resolveJsonModule": true,
-        "esModuleInterop": true,
-        "preserveSymlinks": true,
-        "outDir": "dist/",
+  "include": ["src/**/*"],
+  "compilerOptions": {
+    /* Basic Options */
+    "target": "esnext",
+    "lib": ["ES2022", "dom"],
+    "checkJs": false,
+    "jsx": "preserve",
+    /* Strict Type-Checking Options */
+    "strict": true,
+    "noImplicitAny": false,
+    "strictNullChecks": true,
+    "allowJs": true,
+    /* Additional Checks */
+    "noUnusedLocals": false,
+    "noUnusedParameters": true,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
+    /* Module Resolution Options */
+    "rootDir": "./src/",
+    "baseUrl": "./src/",
+    "paths": {
+      /* Support absolute /lib/* with a leading '/' */
+      "/lib/*": ["lib/*"],
+      /* Support absolute /definitions/* with a leading '/' */
+      "/definitions/*": ["definitions/*"],
+      "@ns": ["../src/types/NetscriptDefinitions.d.ts"]
     },
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "preserveSymlinks": true,
+    "outDir": "dist/"
+  }
 }

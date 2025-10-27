@@ -1,5 +1,5 @@
 import { ITraversalFunction, Traversal, TraversalContext } from "types/traversal";
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 
 const escalate: ITraversalFunction = (ns: NS, traversalContext: TraversalContext, args: { portOpeners: number, serversHacked: [string, string[]][] }) => {
     const hostname = traversalContext.hostname;

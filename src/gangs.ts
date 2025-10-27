@@ -1,4 +1,4 @@
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 
 export async function main(ns: NS) {
     ns.disableLog("ALL");
@@ -17,7 +17,7 @@ async function initialize(ns: NS) {
 }
 
 async function assignTasks(ns: NS) {
-    
+
     const gangInfo = ns.gang.getGangInformation();
     const members = ns.gang.getMemberNames().sort((a, b) => getMemberAverageCombatStat(ns, b) - getMemberAverageCombatStat(ns, a));
 

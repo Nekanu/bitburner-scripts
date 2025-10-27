@@ -1,15 +1,9 @@
-/**
- * MIT (c) 2021 Alain Bryden
- * 
- * @author Alain Bryden
- * @repository https://github.com/alainbryden/bitburner-scripts
- * 
- * Last updated: 2021-08-01
- */
-
+import { jsonReviver, tail } from '../helpers.js'
 const fUnsolvedContracts = '/tmp/unsolved-contracts.txt'; // A global, persistent array of contracts we couldn't solve, so we don't repeatedly log about them.
 
-//Silly human, you can't import a typescript module into a javascript 
+let heartbeat = null;
+
+//Silly human, you can't import a typescript module into a javascript (wouldn't that be slick though?)
 //import { codingContractTypesMetadata } from 'https://raw.githubusercontent.com/danielyxie/bitburner/master/src/data/codingcontracttypes.ts'
 
 // This contract solver has the bare-minimum footprint of 1.6 GB (base) + 10 GB (ns.codingcontract.attempt)
@@ -18,56 +12,95 @@ const fUnsolvedContracts = '/tmp/unsolved-contracts.txt'; // A global, persisten
 /** @param {NS} ns **/
 export async function main(ns) {
     if (ns.args.length < 1)
-        ns.tprint('Contractor solver was incorrectly invoked without arguments.')
-    let contractsDb = JSON.parse(ns.args[0]);
-    const fContents = ns.read(fUnsolvedContracts);
-    const notified = fContents ? JSON.parse(fContents) : [];
-    for (const contractInfo of contractsDb) {
-        const answer = findAnswer(contractInfo)
-        let notice: string = "";
-        if (answer != null) {
-            let solvingResult = false;
-            try {
-                solvingResult = ns.codingcontract.attempt(answer, contractInfo.contract, contractInfo.hostname, { returnReward: true })
-                if (solvingResult) {
-                    const message = `Solved ${contractInfo.contract} on ${contractInfo.hostname} (${contractInfo.type}). Reward: ${solvingResult}`;
-                    ns.toast(message, 'success');
-                    ns.tprint(message);
-                } else {
-                    notice = `ERROR: Wrong answer for contract type "${contractInfo.type}" (${contractInfo.contract} on ${contractInfo.hostname}):` +
-                        `\nIncorrect Answer Given: ${JSON.stringify(answer)}`;
+        ns.tprint('Contractor solver was incorrectly invoked without arguments.');
+
+    // Hack: Use global memory to avoid multiple instances running concurrently (without paying for ns.ps)
+    if (heartbeat != null) // If this variable is set, another instance is likely running!
+        if (performance.now() - heartbeat <= 1000 * 60) // If last start was more 1 minute ago, assume it blew up and isn't actually still running
+            return ns.print("WARNING: Another contractor appears to already be running. Ignoring request.");
+    heartbeat = performance.now();
+
+    try {
+        let contractsDb = JSON.parse(ns.args[0]);
+        const fContents = ns.read(fUnsolvedContracts);
+        const notified = fContents ? JSON.parse(fContents) : [];
+
+        // Don't spam toast notifications and console messages if there are more than 20 contracts to solve:
+        const quietSolve = contractsDb.length > 20;
+        let failureCount = 0;
+        if (quietSolve) {
+            const message = `Welcome back. There are ${contractsDb.length} contracts to solve, so we won't generate a notification for each.`
+            ns.toast(message, 'success');
+            ns.tprint(message);
+        }
+
+        for (const contractInfo of contractsDb) {
+            heartbeat = performance.now();
+            const answer = findAnswer(contractInfo)
+            let notice = null;
+            if (answer != null) {
+                let solvingResult = false;
+                try {
+                    solvingResult = ns.codingcontract.attempt(answer, contractInfo.contract, contractInfo.hostname, { returnReward: true })
+                    if (solvingResult) {
+                        if (!quietSolve) {
+                            const message = `Solved ${contractInfo.contract} on ${contractInfo.hostname} (${contractInfo.type}). Reward: ${solvingResult}`;
+                            ns.toast(message, 'success');
+                            ns.tprint(message);
+                        }
+                    } else {
+                        notice = `ERROR: Wrong answer for contract type "${contractInfo.type}" (${contractInfo.contract} on ${contractInfo.hostname}):` +
+                            `\nIncorrect Answer Given: ${JSON.stringify(answer)}`;
+                    }
+                } catch (err) {
+                    failureCount++;
+                    let errorMessage = typeof err === 'string' ? err : err.message || JSON.stringify(err);
+                    if (err?.stack) errorMessage += '\n' + err.stack;
+                    notice = `ERROR: Attempt to solve contract raised an error. (Answer Given: ${JSON.stringify(answer)})\n"${errorMessage}"`;
+                    // Suppress errors about missing contracts. This can happen if this script gets while another instance is already running.
+                    if (errorMessage.indexOf("Cannot find contract") == -1) {
+                        ns.print(notice); // Still log it to the terminal in case we're debugging a fake contract.
+                        notice = null;
+                    }
                 }
-            } catch (err: any) {
-                let errorMessage = typeof err === 'string' ? err : err.message || JSON.stringify(err);
-                if (err?.stack) errorMessage += '\n' + err.stack;
-                notice = `ERROR: Attemt to solve contract raised an error. (Answer Given: ${JSON.stringify(answer)})` +
-                    `\nWhile unlikely, this could happen if the contract vanished before we had a chance to solve it:\n"${errorMessage}"`;
+            } else {
+                notice = `WARNING: No solver available for contract type "${contractInfo.type}"`;
             }
-        } else {
-            notice = `WARNING: No solver available for contract type "${contractInfo.type}"`;
-        }
-        if (notice) {
-            if (!notified.includes(contractInfo.contract)) {
-                ns.tprint(notice + `\nContract Info: ${JSON.stringify(contractInfo)}`)
-                ns.toast(notice, 'warning');
-                notified.push(contractInfo.contract)
+            if (notice) {
+                if (!notified.includes(contractInfo.contract) && !quietSolve) {
+                    ns.tprint(notice + `\nContract Info: ${JSON.stringify(contractInfo)}`)
+                    ns.toast(notice, 'warning');
+                    notified.push(contractInfo.contract)
+                }
+                // Always print errors to scripts own tail window
+                ns.print(notice + `\nContract Info: ${JSON.stringify(contractInfo)}`);
             }
-            ns.print(notice + `\nContract Info: ${JSON.stringify(contractInfo)}`);
+            await ns.sleep(10)
         }
-        await ns.sleep(10)
+        // Keep tabs of failed contracts
+        if (notified.length > 0)
+            await ns.write(fUnsolvedContracts, JSON.stringify(notified), "w");
+        // Let the user know when we're done solving a large number of contracts.
+        if (quietSolve) {
+            const message = `Done solving ${contractsDb.length}. ${contractsDb.length - failureCount} succeeded, and ${failureCount} failed. See tail logs for errors.`
+            if (failureCount > 0)
+                tail(ns);
+            ns.toast(message, 'success');
+            ns.tprint(message);
+        }
     }
-    // Keep tabs of failed contracts
-    if (notified.length > 0)
-        await ns.write(fUnsolvedContracts, JSON.stringify(notified), "w");
+    finally {
+        heartbeat = null; // Signal that we're no longer running in case another contractor wants to start running.
+    }
 }
 
-function findAnswer(contract: any) {
-    const codingContractSolution: { name: string, solver: (data: any) => any } = codingContractTypesMetadata.find((codingContractTypeMetadata) => codingContractTypeMetadata.name === contract.type)!;
-    return codingContractSolution ? codingContractSolution.solver(contract.data) : null;
+function findAnswer(contract) {
+    const codingContractSolution = codingContractTypesMetadata.find((codingContractTypeMetadata) => codingContractTypeMetadata.name === contract.type)
+    return codingContractSolution ? codingContractSolution.solver(JSON.parse(contract.dataJson, jsonReviver)) : null;
 }
 
-function convert2DArrayToString(arr: any[][]) {
-    const components: string[] = []
+function convert2DArrayToString(arr) {
+    const components = []
     arr.forEach(function (e) {
         let s = e.toString()
         s = ['[', s, ']'].join('')
@@ -79,7 +112,7 @@ function convert2DArrayToString(arr: any[][]) {
 // Based on https://github.com/danielyxie/bitburner/blob/master/src/data/codingcontracttypes.ts
 const codingContractTypesMetadata = [{
     name: 'Find Largest Prime Factor',
-    solver: function (data: number) {
+    solver: function (data) {
         let fac = 2
         let n = data
         while (n > (fac - 1) * (fac - 1)) {
@@ -93,7 +126,7 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Subarray with Maximum Sum',
-    solver: function (data: number[]) {
+    solver: function (data) {
         const nums = data.slice()
         for (let i = 1; i < nums.length; i++) {
             nums[i] = Math.max(nums[i], nums[i] + nums[i - 1])
@@ -103,7 +136,7 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Total Ways to Sum',
-    solver: function (data: number) {
+    solver: function (data) {
         const ways = [1]
         ways.length = data + 1
         ways.fill(0, 1)
@@ -117,7 +150,7 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Total Ways to Sum II',
-    solver: function (data: [number, number[]]) {
+    solver: function (data) {
         const n = data[0];
         const s = data[1];
         const ways = [1];
@@ -133,8 +166,8 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Spiralize Matrix',
-    solver: function (data: number[][]) {
-        const spiral: number[] = []
+    solver: function (data) {
+        const spiral = []
         const m = data.length
         const n = data[0].length
         let u = 0
@@ -182,7 +215,7 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Array Jumping Game',
-    solver: function (data: number[]) {
+    solver: function (data) {
         const n = data.length
         let i = 0
         for (let reach = 0; i < n && i <= reach; ++i) {
@@ -194,7 +227,7 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Array Jumping Game II',
-    solver: function (data: number[]) {
+    solver: function (data) {
         if (data[0] == 0)
             return '0';
         const n = data.length;
@@ -221,12 +254,12 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Merge Overlapping Intervals',
-    solver: function (data: [number, number][]) {
+    solver: function (data) {
         const intervals = data.slice()
         intervals.sort(function (a, b) {
             return a[0] - b[0]
         })
-        const result: [number, number][] = []
+        const result = []
         let start = intervals[0][0]
         let end = intervals[0][1]
         for (const interval of intervals) {
@@ -245,8 +278,8 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Generate IP Addresses',
-    solver: function (data: string) {
-        const ret: string[] = []
+    solver: function (data) {
+        const ret = []
         for (let a = 1; a <= 3; ++a) {
             for (let b = 1; b <= 3; ++b) {
                 for (let c = 1; c <= 3; ++c) {
@@ -272,7 +305,7 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Algorithmic Stock Trader I',
-    solver: function (data: number[]) {
+    solver: function (data) {
         let maxCur = 0
         let maxSoFar = 0
         for (let i = 1; i < data.length; ++i) {
@@ -284,7 +317,7 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Algorithmic Stock Trader II',
-    solver: function (data: number[]) {
+    solver: function (data) {
         let profit = 0
         for (let p = 1; p < data.length; ++p) {
             profit += Math.max(data[p] - data[p - 1], 0)
@@ -294,7 +327,7 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Algorithmic Stock Trader III',
-    solver: function (data: number[]) {
+    solver: function (data) {
         let hold1 = Number.MIN_SAFE_INTEGER
         let hold2 = Number.MIN_SAFE_INTEGER
         let release1 = 0
@@ -310,7 +343,7 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Algorithmic Stock Trader IV',
-    solver: function (data: [number, number[]]) {
+    solver: function (data) {
         const k = data[0]
         const prices = data[1]
         const len = prices.length
@@ -324,8 +357,8 @@ const codingContractTypesMetadata = [{
             }
             return res
         }
-        const hold: number[] = []
-        const rele: number[] = []
+        const hold = []
+        const rele = []
         hold.length = k + 1
         rele.length = k + 1
         for (let i = 0; i <= k; ++i) {
@@ -345,7 +378,7 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Minimum Path Sum in a Triangle',
-    solver: function (data: number[][]) {
+    solver: function (data) {
         const n = data.length
         const dp = data[n - 1].slice()
         for (let i = n - 2; i > -1; --i) {
@@ -358,10 +391,10 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Unique Paths in a Grid I',
-    solver: function (data: number[]) {
+    solver: function (data) {
         const n = data[0] // Number of rows
         const m = data[1] // Number of columns
-        const currentRow: number[] = []
+        const currentRow = []
         currentRow.length = n
         for (let i = 0; i < n; i++) {
             currentRow[i] = 1
@@ -376,8 +409,8 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Unique Paths in a Grid II',
-    solver: function (data: number[][]) {
-        const obstacleGrid: number[][] = []
+    solver: function (data) {
+        const obstacleGrid = []
         obstacleGrid.length = data.length
         for (let i = 0; i < obstacleGrid.length; ++i) {
             obstacleGrid[i] = data[i].slice()
@@ -398,9 +431,9 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Shortest Path in a Grid',
-    solver: function (data: number[][]) {
-        //slightly adapted and simplified to get rid of MinHeap usage, and construct a valid path from potential candidates   
-        //MinHeap replaced by simple array acting as queue (breadth first search)  
+    solver: function (data) {
+        //slightly adapted and simplified to get rid of MinHeap usage, and construct a valid path from potential candidates
+        //MinHeap replaced by simple array acting as queue (breadth first search)
         const width = data[0].length;
         const height = data.length;
         const dstY = height - 1;
@@ -408,7 +441,7 @@ const codingContractTypesMetadata = [{
 
         const distance = new Array(height);
         //const prev: [[number, number] | undefined][] = new Array(height);
-        const queue: [number, number][] = [];
+        const queue = [];
 
         for (let y = 0; y < height; y++) {
             distance[y] = new Array(width).fill(Infinity);
@@ -450,10 +483,10 @@ const codingContractTypesMetadata = [{
         // }
 
         //Simplified version. d < distance[yN][xN] should never happen for BFS if d != infinity, so we skip changeweight and simplify implementation
-        //algo always expands shortest path, distance != infinity means a <= lenght path reaches it, only remaining case to solve is infinity    
+        //algo always expands shortest path, distance != infinity means a <= lenght path reaches it, only remaining case to solve is infinity
         queue.push([0, 0]);
         while (queue.length > 0) {
-            const [y, x] = queue.shift()!;
+            const [y, x] = queue.shift()
             for (const [yN, xN] of neighbors(y, x)) {
                 if (distance[yN][xN] == Infinity) {
                     queue.push([yN, xN])
@@ -484,7 +517,7 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Sanitize Parentheses in Expression',
-    solver: function (data: string) {
+    solver: function (data) {
         let left = 0
         let right = 0
         const res = []
@@ -527,7 +560,7 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Find All Valid Math Expressions',
-    solver: function (data: string) {
+    solver: function (data) {
         const num = data[0]
         const target = data[1]
 
@@ -564,7 +597,7 @@ const codingContractTypesMetadata = [{
 {
     //Taken from https://github.com/danielyxie/bitburner/blob/dev/src/utils/HammingCodeTools.ts and converted to js by Discord: H3draut3r#6722
     name: 'HammingCodes: Integer to Encoded Binary',
-    solver: function (value: number) {
+    solver: function (value) {
         // Calculates the needed amount of parityBits 'without' the "overall"-Parity
         const HammingSumOfParity = lengthOfDBits => lengthOfDBits == 0 ? 0 : lengthOfDBits < 3 ? lengthOfDBits + 1 :
             Math.ceil(Math.log2(lengthOfDBits * 2)) <= Math.ceil(Math.log2(1 + lengthOfDBits + Math.ceil(Math.log2(lengthOfDBits)))) ?
@@ -579,12 +612,12 @@ const codingContractTypesMetadata = [{
         // Get the index numbers where the parity bits "x" are placed
         const parityBits = build.map((e, i) => [e, i]).filter(([e, _]) => e == "x").map(([_, i]) => i);
         for (const index of parityBits) {
-            const tempcount = index as number + 1; // set the "stepsize" for the parityBit
-            const temparray: string[] = []; // temporary array to store the extracted bits
+            const tempcount = index + 1; // set the "stepsize" for the parityBit
+            const temparray = []; // temporary array to store the extracted bits
             const tempdata = [...build]; // only work with a copy of the build
             while (tempdata[index] !== undefined) {
                 // as long as there are bits on the starting index, do "cut"
-                const temp = tempdata.splice(index as number, tempcount * 2); // cut stepsize*2 bits, then...
+                const temp = tempdata.splice(index, tempcount * 2); // cut stepsize*2 bits, then...
                 temparray.push(...temp.splice(0, tempcount)); // ... cut the result again and keep the first half
             }
             temparray.splice(0, 1); // remove first bit, which is the parity one
@@ -596,21 +629,21 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'HammingCodes: Encoded Binary to Integer',
-    solver: function (data: string) {
+    solver: function (data) {
         //check for altered bit and decode
         const build = data.split(""); // ye, an array for working, again
-        const testArray: boolean[] = []; //for the "truthtable". if any is false, the data has an altered bit, will check for and fix it
+        const testArray = []; //for the "truthtable". if any is false, the data has an altered bit, will check for and fix it
         const sumParity = Math.ceil(Math.log2(data.length)); // sum of parity for later use
         const count = (arr, val) => arr.reduce((a, v) => (v === val ? a + 1 : a), 0);
         // the count.... again ;)
         let overallParity = build.splice(0, 1).join(""); // store first index, for checking in next step and fix the build properly later on
-        testArray.push(overallParity == (count(build, "1") % 2).toString()); // first check with the overall parity bit
+        testArray.push(overallParity == (count(build, "1") % 2).toString() ? true : false); // first check with the overall parity bit
         for (let i = 0; i < sumParity; i++) {
             // for the rest of the remaining parity bits we also "check"
             const tempIndex = Math.pow(2, i) - 1; // get the parityBits Index
             const tempStep = tempIndex + 1; // set the stepsize
             const tempData = [...build]; // get a "copy" of the build-data for working
-            const tempArray: string[] = []; // init empty array for "testing"
+            const tempArray = []; // init empty array for "testing"
             while (tempData[tempIndex] != undefined) {
                 // extract from the copied data until the "starting" index is undefined
                 const temp = [...tempData.splice(tempIndex, tempStep * 2)]; // extract 2*stepsize
@@ -627,9 +660,9 @@ const codingContractTypesMetadata = [{
         }
         build.unshift(overallParity); // now we need the "overall" parity back in it's place
         // try fix the actual encoded binary string if there is an error
-        if (fixIndex > 0 && testArray[0] == false) { // if the overall is false and the sum of calculated values is greater equal 0, fix the corresponding hamming-bit           
+        if (fixIndex > 0 && testArray[0] == false) { // if the overall is false and the sum of calculated values is greater equal 0, fix the corresponding hamming-bit
             build[fixIndex] = build[fixIndex] == "0" ? "1" : "0";
-        } else if (testArray[0] == false) { // otherwise, if the the overallparity is the only wrong, fix that one           
+        } else if (testArray[0] == false) { // otherwise, if the the overallparity is the only wrong, fix that one
             overallParity = overallParity == "0" ? "1" : "0";
         } else if (testArray[0] == true && testArray.some((truth) => truth == false)) {
             return 0; // ERROR: There's some strange going on... 2 bits are altered? How? This should not happen
@@ -645,12 +678,12 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Proper 2-Coloring of a Graph',
-    solver: function (data: [number, [number, number][]]) {
+    solver: function (data) {
         // convert from edges to nodes
-        const nodes: number[][] = new Array(data[0]).fill(0).map(() => [])
-        for (const edge of data[1]) {
-            nodes[edge[0]].push(edge[1])
-            nodes[edge[1]].push(edge[0])
+        const nodes = new Array(data[0]).fill(0).map(() => [])
+        for (const e of data[1]) {
+            nodes[e[0]].push(e[1])
+            nodes[e[1]].push(e[0])
         }
         // solution graph starts out undefined and fills in with 0s and 1s
         const solution = new Array(data[0]).fill(undefined)
@@ -685,14 +718,14 @@ const codingContractTypesMetadata = [{
 },
 {
     name: "Compression I: RLE Compression",
-    solver: function (data: string) {
+    solver: function (data) {
         //original code doesn't generate an answer, but validates it, fallback to this one-liner
         return data.replace(/([\w])\1{0,8}/g, (group, chr) => group.length + chr)
     }
 },
 {
     name: "Compression II: LZ Decompression",
-    solver: function (compr: string) {
+    solver: function (compr) {
         let plain = "";
 
         for (let i = 0; i < compr.length;) {
@@ -737,7 +770,7 @@ const codingContractTypesMetadata = [{
 },
 {
     name: "Compression III: LZ Compression",
-    solver: function (plain: string) {
+    solver: function (plain) {
         let cur_state = Array.from(Array(10), () => Array(10).fill(null));
         let new_state = Array.from(Array(10), () => Array(10));
 
@@ -819,16 +852,16 @@ const codingContractTypesMetadata = [{
             cur_state = tmp_state;
         }
 
-        let result = "";
+        let result = null;
 
         for (let len = 1; len <= 9; ++len) {
             let string = cur_state[0][len];
-            if (string == "") {
+            if (string == null) {
                 continue;
             }
 
             string += len + plain.substring(plain.length - len, plain.length);
-            if (result == "" || string.length < result.length) {
+            if (result == null || string.length < result.length) {
                 result = string;
             } else if (string.length == result.length && Math.random() < 0.5) {
                 result = string;
@@ -838,12 +871,12 @@ const codingContractTypesMetadata = [{
         for (let offset = 1; offset <= 9; ++offset) {
             for (let len = 1; len <= 9; ++len) {
                 let string = cur_state[offset][len];
-                if (string == "") {
+                if (string == null) {
                     continue;
                 }
 
                 string += len + "" + offset;
-                if (result == "" || string.length < result.length) {
+                if (result == null || string.length < result.length) {
                     result = string;
                 } else if (string.length == result.length && Math.random() < 0.5) {
                     result = string;
@@ -856,7 +889,7 @@ const codingContractTypesMetadata = [{
 },
 {
     name: 'Encryption I: Caesar Cipher',
-    solver: function (data: [string, number]) {
+    solver: function (data) {
         // data = [plaintext, shift value]
         // build char array, shifting via map and join to final results
         const cipher = [...data[0]]
@@ -865,10 +898,9 @@ const codingContractTypesMetadata = [{
         return cipher;
     }
 },
-
 {
     name: "Encryption II: Vigenère Cipher",
-    solver: function (data: [string, string]) {
+    solver: function (data) {
         // data = [plaintext, keyword]
         // build char array, shifting via map and corresponding keyword letter and join to final results
         const cipher = [...data[0]]
@@ -880,6 +912,33 @@ const codingContractTypesMetadata = [{
             .join("");
         return cipher;
     }
+},
+{
+    name: "Square Root",
+    /** Uses the Newton-Raphson method to iteratively improve the guess until the answer is found.
+     * @param {bigint} n */
+    solver: function (n) {
+        const two = BigInt(2);
+        if (n < two) return n; // Square root of 1 is 1, square root of 0 is 0
+        let root = n / two; // Initial guess
+        let x1 = (root + n / root) / two;
+        while (x1 < root) {
+            root = x1;
+            x1 = (root + n / root) / two;
+        }
+        // That's it, solved! At least, we've converged an an answer which should be as close as we can get (might be off by 1)
+        // We want the answer to the "nearest integer". Check the answer on either side of the one we converged on to see what's closest
+        const bigAbs = (x) => x < 0n ? -x : x; // There's no Math.abs where we're going...
+        let absDiff = bigAbs(root * root - n); // How far off we from the perfect square root
+        if (absDiff == 0n) return root; // Note that this coding contract doesn't guarantee there's an exact integer square root
+        else if (absDiff > bigAbs((root - 1n) * (root - 1n) - n)) root = root - 1n; // Do we get a better answer by subtracting 1?
+        else if (absDiff > bigAbs((root + 1n) * (root + 1n) - n)) root = root + 1n; // Do we get a better answer by adding 1?
+        // Validation: We should be able to tell if we got this right without wasting a guess. Adding/Subtracting 1 should now always be worse
+        absDiff = bigAbs(root * root - n);
+        if (absDiff > bigAbs((root - 1n) * (root - 1n) - n) ||
+            absDiff > bigAbs((root + 1n) * (root + 1n) - n))
+            throw new Error(`Square Root did not converge. Arrived at answer:\n${root} - which when squared, gives:\n${root * root} instead of\n${n}`);
+        return root.toString();
+    }
 }
-
 ]

@@ -1,5 +1,5 @@
 
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 import { ITraversalFunction, Traversal, TraversalContext } from "types/traversal";
 import { getRamMapping } from "types/ramMapping";
 import { findAndExecuteScriptOnServers } from "/lib/helpers";
@@ -38,7 +38,7 @@ export async function main(ns: NS) {
     let hackingLevel = 0;
 
     let pidsRead = 0;
-    status.forEach((hackStatus,) => {pidsRead += hackStatus.monitorPids.length;});
+    status.forEach((hackStatus,) => { pidsRead += hackStatus.monitorPids.length; });
     ns.tprintf("Read %d servers with %d PIDs to monitor", status.size, pidsRead);
 
     // Perform initial escalation
@@ -202,9 +202,9 @@ function sortServersAfterProfit(ns: NS) {
             return 0;
         }
 
-        const progressionA = (ns.getServerMoneyAvailable(a[0]) / ns.getServerMaxMoney(a[0])) 
+        const progressionA = (ns.getServerMoneyAvailable(a[0]) / ns.getServerMaxMoney(a[0]))
             - (ns.getServerSecurityLevel(a[0]) / ns.getServerMinSecurityLevel(a[0]));
-        const progressionB = (ns.getServerMoneyAvailable(b[0]) / ns.getServerMaxMoney(b[0])) 
+        const progressionB = (ns.getServerMoneyAvailable(b[0]) / ns.getServerMaxMoney(b[0]))
             - (ns.getServerSecurityLevel(b[0]) / ns.getServerMinSecurityLevel(b[0]));
 
         return progressionB - progressionA;

@@ -1,4 +1,4 @@
-import { NS } from "types/netscript";
+import { NS } from "@ns";
 import { getRamMapping } from "types/ramMapping";
 import { HackingState } from "types/hacking";
 import { findAndExecuteScriptOnServers } from "lib/helpers";
