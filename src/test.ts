@@ -1,11 +1,11 @@
-import { NS } from "@ns";
+import { AutocompleteData, NS } from "@ns";
 
 const weakenScript = "/lib/weaken.js";
 const growScript = "/lib/grow.js";
 const hackScript = "/lib/hack.js";
 
 
-export function autocomplete(data,) {
+export function autocomplete(data: AutocompleteData,) {
     return [...data.servers];
 }
 

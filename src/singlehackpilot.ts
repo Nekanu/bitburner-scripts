@@ -410,32 +410,3 @@ enum HackState {
     Waiting,
     Running
 }
-
-const prevSortFunction = (a, b) => {
-    let stateA: HackStatus | undefined = status.get(a[0]);
-    let stateB: HackStatus | undefined = status.get(b[0]);
-
-    // Prefer strongly running hacks
-    if (stateA?.state !== stateB?.state) {
-
-        if (stateA?.state === HackState.Running) {
-            return -1;
-        }
-        else if (stateB?.state === HackState.Running) {
-            return 1;
-        }
-    }
-
-    // Prefer later stages of hacks (weaken -> grow -> hack)
-    if (stateA?.state === HackState.Running && stateB?.state === HackState.Running) {
-
-        // If at the same stage, sort by least amount of threads needed
-        if (stateA?.action === stateB?.action) {
-            return stateA?.threadsNeeded! - stateB?.threadsNeeded!;
-        }
-
-        return stateB?.action! - stateA?.action!;
-    }
-
-    return b[1] - a[1];
-};

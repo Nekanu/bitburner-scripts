@@ -106,7 +106,6 @@ export async function main(ns: NS) {
 
             ns.tprintf(`(${iter}/${serversHacked.length}) - Installing backdoor on ${server}`);
             await ns.singularity.installBackdoor();
-            ns.formulas.mockServer();
             ns.singularity.connect("home");
             iter++;
         }

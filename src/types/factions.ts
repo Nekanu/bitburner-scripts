@@ -1,29 +1,29 @@
 import { FactionWorkType, NS } from "@ns";
 
-export const factionExclusiveAugmentations = {
-    "Aevum": ["PCMatrix"],
-    "Chongqing": ["Neuregen Gene Modification"],
-    "Ishima": ["INFRARET Enhancement"],
-    "New Tokyo": ["NutriGen Implant"],
-    "Sector-12": ["CashRoot Starter Kit"],
-    "Volhaven": ["DermaForce Particle Barrier"],
-    "The Black Hand": ["The Black Hand"],
-    "NiteSec": ["Neural-Retention Enhancement", "CRTX42-AA Gene Modification"],
-    "Tetrads": ["Bionic Arms"],
-    "Slum Snakes": ["SmartSonar Implant"],
-    "Tian Di Hui": ["Social Negotiation Assistant (S.N.A)", "Neuroreceptor Management Implant"],
-    "BitRunners": ["Neural Accelerator", "Cranial Signal Processors - Gen V", "BitRunners Neurolink"],
-    "The Syndicate": ["BrachiBlades"]
-};
+export const factionExclusiveAugmentations: Map<string, string[]> = new Map([
+    ["Aevum", ["PCMatrix"]],
+    ["Chongqing", ["Neuregen Gene Modification"]],
+    ["Ishima", ["INFRARET Enhancement"]],
+    ["New Tokyo", ["NutriGen Implant"]],
+    ["Sector-12", ["CashRoot Starter Kit"]],
+    ["Volhaven", ["DermaForce Particle Barrier"]],
+    ["The Black Hand", ["The Black Hand"]],
+    ["NiteSec", ["Neural-Retention Enhancement", "CRTX42-AA Gene Modification"]],
+    ["Tetrads", ["Bionic Arms"]],
+    ["Slum Snakes", ["SmartSonar Implant"]],
+    ["Tian Di Hui", ["Social Negotiation Assistant (S.N.A)", "Neuroreceptor Management Implant"]],
+    ["BitRunners", ["Neural Accelerator", "Cranial Signal Processors - Gen V", "BitRunners Neurolink"]],
+    ["The Syndicate", ["BrachiBlades"]],
+]);
 
-export const preventingFactions = {
-    "Sector-12": ["Chongqing", "New Tokyo", "Ishima", "Volhaven"],
-    "Chongqing": ["Sector-12", "Aevum", "Volhaven"],
-    "New Tokyo": ["Sector-12", "Aevum", "Volhaven"],
-    "Ishima": ["Sector-12", "Aevum", "Volhaven"],
-    "Aevum": ["Chongqing", "New Tokyo", "Ishima", "Volhaven"],
-    "Volhaven": ["Sector-12", "Chongqing", "New Tokyo", "Ishima", "Volhaven"],
-};
+export const preventingFactions: Map<string, string[]> = new Map([
+    ["Sector-12", ["Chongqing", "New Tokyo", "Ishima", "Volhaven"]],
+    ["Chongqing", ["Sector-12", "Aevum", "Volhaven"]],
+    ["New Tokyo", ["Sector-12", "Aevum", "Volhaven"]],
+    ["Ishima", ["Sector-12", "Aevum", "Volhaven"]],
+    ["Aevum", ["Chongqing", "New Tokyo", "Ishima", "Volhaven"]],
+    ["Volhaven", ["Sector-12", "Chongqing", "New Tokyo", "Ishima", "Volhaven"]],
+]);
 
 export class FactionWorkStats {
     faction: string;
@@ -47,7 +47,7 @@ export class FactionWorkStats {
 
         this.reputationNeededForExclusiveAugmentations = ns.singularity.getAugmentationsFromFaction(faction)
             .filter(a => !ns.singularity.getOwnedAugmentations(true).includes(a))
-            //.filter(a => factionExclusiveAugmentations[faction].includes(a))
+            .filter(a => factionExclusiveAugmentations.get(faction)?.includes(a))
             .reduce((a, b, _) => Math.max(a, ns.singularity.getAugmentationRepReq(b)), 0);
 
         this.reputationNeededToDonate = ns.formulas.reputation.calculateFavorToRep(ns.getFavorToDonate());

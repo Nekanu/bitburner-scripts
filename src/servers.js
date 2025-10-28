@@ -17,15 +17,15 @@ let css = `<style id="scanCSS">
         .sc .cct {color:#0ff;}
     </style>`;
 let doc = eval("document");
-let tprint = (html: any) => doc.getElementById("terminal").insertAdjacentHTML('beforeend', `<li>${html}</li>`);
+let tprint = (html) => doc.getElementById("terminal").insertAdjacentHTML('beforeend', `<li>${html}</li>`);
 /** @param {NS} ns **/
-export let main = (ns: NS) => {
+export let main = (ns) => {
     let tIn = doc.getElementById("terminal-input");
     let tEv = tIn[Object.keys(tIn)[1]];
     let priorCss = doc.getElementById("scanCSS");
     if (priorCss) priorCss.parentNode.removeChild(priorCss); // Remove old CSS to facilitate tweaking css above
     doc.head.insertAdjacentHTML('beforeend', css);
-    let serverInfo = (x: string) => {
+    let serverInfo = (x) => {
         return ns.getServer(x); // Costs 2 GB. If you can't don't need backdoor links, uncomment and use the alternate implementations below
         /* return {
             requiredHackingSkill: ns.getServerRequiredHackingLevel(x),
@@ -38,20 +38,20 @@ export let main = (ns: NS) => {
         p = [""],
         r = { home: "home" },
         myHack = ns.getHackingLevel(),
-        fName = (x: string) => {
+        fName = (x) => {
             let server = serverInfo(x); // Costs 2 GB. If you can't don't need backdoor links, uncomment the alternate implementations below
             let reqHack = server.requiredHackingSkill; // ns.getServerRequiredHackingLevel(x);
             let rooted = server.hasAdminRights; // ns.hasRootAccess(x);
-            let shouldBackdoor = !server?.backdoorInstalled && reqHack! <= myHack && x != 'home' && rooted && !server.purchasedByPlayer;
+            let shouldBackdoor = !server?.backdoorInstalled && reqHack <= myHack && x != 'home' && rooted && !server.purchasedByPlayer;
             let contracts = ns.ls(x, ".cct"); // Find out whether there are any contracts on the server
             return `<span class="w" id="${x}">` +
                 `<a class="s${factionServers.includes(x) ? " f" : ""}${rooted ? " r" : ""}">${x}</a>
-                <span class="hack ${(reqHack! <= myHack ? 'green' : 'red')}">(${reqHack})</span>
+                <span class="hack ${(reqHack <= myHack ? 'green' : 'red')}">(${reqHack})</span>
                 ${(shouldBackdoor ? '<span class="backdoor">[<a>backdoor</a>]</span>' : '')}
                 ${contracts.map(c => `<span class="cct" title="${c}">@</span>`)}
             </span>`;
         };
-    let tcommand = (x: string) => {
+    let tcommand = (x) => {
         tIn.value = x;
         tEv.onChange({ target: tIn });
         tEv.onKeyDown({ keyCode: "13", preventDefault: () => 0 });
@@ -66,7 +66,7 @@ export let main = (ns: NS) => {
         }
         return o;
     };
-    let ordering = (a: string, b: string) => {
+    let ordering = (a, b) => {
         let d = ns.scan(a).length - ns.scan(b).length; // Sort servers with fewer connections towards the top.
         d = d != 0 ? d : (serverInfo(b).purchasedByPlayer ? 1 : 0) - (serverInfo(a).purchasedByPlayer ? 1 : 0); // Purchased servers to the very top
         d = d != 0 ? d : a.slice(0, 2).toLowerCase().localeCompare(b.slice(0, 2).toLowerCase()); // Hack: compare just the first 2 chars to keep purchased servers in order purchased

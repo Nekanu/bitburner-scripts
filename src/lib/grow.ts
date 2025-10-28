@@ -1,6 +1,6 @@
-import { NS } from "@ns";
+import { AutocompleteData, NS } from "@ns";
 
-export function autocomplete(data,) {
+export function autocomplete(data: AutocompleteData,) {
     return [...data.servers];
 }
 

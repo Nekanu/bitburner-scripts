@@ -1,35 +1,25 @@
 {
   "include": ["src/**/*"],
+  "exclude": ["src/lib/react.ts"],
   "compilerOptions": {
-    /* Basic Options */
+    "module": "esnext",
     "target": "esnext",
-    "lib": ["ES2022", "dom"],
-    "checkJs": false,
-    "jsx": "preserve",
-    /* Strict Type-Checking Options */
-    "strict": true,
-    "noImplicitAny": false,
-    "strictNullChecks": true,
-    "allowJs": true,
-    /* Additional Checks */
-    "noUnusedLocals": false,
-    "noUnusedParameters": true,
-    "noImplicitReturns": false,
-    "noFallthroughCasesInSwitch": false,
-    /* Module Resolution Options */
-    "rootDir": "./src/",
-    "baseUrl": "./src/",
-    "paths": {
-      /* Support absolute /lib/* with a leading '/' */
-      "/lib/*": ["lib/*"],
-      /* Support absolute /definitions/* with a leading '/' */
-      "/definitions/*": ["definitions/*"],
-      "@ns": ["../src/types/NetscriptDefinitions.d.ts"]
-    },
     "moduleResolution": "node",
-    "resolveJsonModule": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
     "esModuleInterop": true,
-    "preserveSymlinks": true,
-    "outDir": "dist/"
+    "inlineSourceMap": true,
+    "inlineSources": true,
+    "strict": true,
+    "rootDir": "src/",
+    "outDir": "dist/",
+    "baseUrl": "src/",
+    "allowJs": true,
+    "jsx": "react",
+    "paths": {
+      "/*": ["*"],
+      "@ns": ["../NetscriptDefinitions.d.ts"],
+      "@react": ["lib/react.ts"]
+    }
   }
 }

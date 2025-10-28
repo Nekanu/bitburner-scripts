@@ -18,14 +18,14 @@ export async function main(ns: NS) {
 function checkFactionInvite(ns: NS, faction: string): boolean {
 
     // If faction does not block us from joining other factions, we can safely join
-    if (!preventingFactions[faction]) {
+    if (!preventingFactions.get(faction)) {
         return true;
     }
 
     // Else, check if we have the exclusive augmentation from this faction
-    const exclusiveAugmentations = factionExclusiveAugmentations[faction];
+    const exclusiveAugmentations = factionExclusiveAugmentations.get(faction);
 
-    for (const exclusiveAugmentation of exclusiveAugmentations) {
+    for (const exclusiveAugmentation of exclusiveAugmentations ?? []) {
         // If we do not have the exclusive augmentation, we can join the faction
         if (!ns.singularity.getOwnedAugmentations().includes(exclusiveAugmentation)) {
             return true;

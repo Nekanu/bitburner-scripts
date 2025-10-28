@@ -38,9 +38,6 @@ async function getMostProfitableWork(ns: NS) {
     for (const faction of player.factions) {
         for (const workType of Object.values(ns.enums.FactionWorkType)) {
             const work: WorkStats = formulas.factionGains(player, workType, ns.singularity.getFactionFavor(faction));
-            for (var key of Object.keys(work)) {
-                work[key] *= 0.2; // Faction work is 20% as effective as normal work
-            }
         }
     }
 }

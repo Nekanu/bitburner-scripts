@@ -4,20 +4,30 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "clean": "rm -rf dist/*",
-    "build": "tsc -p tsconfig.json",
-    "watch": "tsc -w -p tsconfig.json"
+    "watch:transpile": "tsc -w --preserveWatchOutput",
+    "watch:local": "node build/watch.js",
+    "watch:remote": "bitburner-filesync",
+    "watch:init": "node build/init.js",
+    "watch:all": "concurrently npm:watch:transpile npm:watch:local npm:watch:remote",
+    "watch": "npm run watch:init && npm run watch:all"
   },
   "author": "Nekanu",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^20.6.0",
+    "@types/react": "^18.2.18",
+    "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.7.0",
     "@typescript-eslint/parser": "^6.7.0",
     "class-transformer": "^0.5.1",
     "eslint": "^8.49.0",
     "typescript": "^5.2.2",
-    "typescript-graph": "^0.3.0"
+    "typescript-graph": "^0.3.0",
+    "bitburner-filesync": "^1.1.5",
+    "chokidar": "^3.5.3",
+    "concurrently": "^7.4.0",
+    "fast-glob": "^3.2.12",
+    "sync-directory": "^5.1.7"
   },
   "dependencies": {
     "reflect-metadata": "^0.1.13"
