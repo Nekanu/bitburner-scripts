@@ -52,7 +52,7 @@ export async function main(ns: NS) {
         ns.tprintf("\tField    (%.3f rep/s): %s", workPerSecField, formatTimeSeconds(timeNeededInSecondsField));
         ns.tprintf("\tSecurity (%.3f rep/s): %s", workPerSecSecurity, formatTimeSeconds(timeNeededInSecondsSecurity));
         ns.tprintf(`Reset will bring ${cyan}%d favor${reset}`, ns.singularity.getFactionFavorGain(faction));
-        ns.tprint("");
+        ns.tprint("----------------------------------------------");
     });
 
     // Persist new status

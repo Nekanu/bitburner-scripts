@@ -12,6 +12,11 @@ const securityThreshold = 0.9; // The percentage of the minimum security level o
 const moneyThreshold = 0.9; // The percentage of the maximum money of a server that should be reached before we start hacking it
 const hackPercentage = 0.75; // The percentage of the available money of a server that should be hacked before we stop hacking it
 
+const ignoreServers = ["home", "darkweb", "CSEC", "avmnite-02h", "I.I.I.I", "run4theh111z", "The-Cave", "w0r1d_d43m0n",
+    "prim00", "prim01", "prim02", "prim03", "prim04", "prim05", "prim06", "prim07", "prim08", "prim09",
+    "prim10", "prim11", "prim12", "prim13", "prim14", "prim15", "prim16", "prim17", "prim18", "prim19",
+    "prim20", "prim21", "prim22", "prim23", "prim24", "prim25"]; // I do not want to refactor just because of this
+
 const profitSortFunction = (a: ServerHackStatus, b: ServerHackStatus) => {
     // Prefer servers that are rooted
     if (a.isHackable !== b.isHackable) {
@@ -64,7 +69,7 @@ export class HackingState {
 
         new Traversal((ns: NS, context: TraversalContext, args: ServerHackStatus[]) => {
             args.push(new ServerHackStatus(ns, context.hostname));
-        }, true, ["home"]).start(ns, "home", serverHackQueue);
+        }, true, ignoreServers).start(ns, "home", serverHackQueue);
 
         serverHackQueue.sort(profitSortFunction);
 

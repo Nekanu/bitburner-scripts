@@ -47,7 +47,7 @@ export class FactionWorkStats {
 
         this.reputationNeededForExclusiveAugmentations = ns.singularity.getAugmentationsFromFaction(faction)
             .filter(a => !ns.singularity.getOwnedAugmentations(true).includes(a))
-            .filter(a => factionExclusiveAugmentations[faction].includes(a))
+            //.filter(a => factionExclusiveAugmentations[faction].includes(a))
             .reduce((a, b, _) => Math.max(a, ns.singularity.getAugmentationRepReq(b)), 0);
 
         this.reputationNeededToDonate = ns.formulas.reputation.calculateFavorToRep(ns.getFavorToDonate());
