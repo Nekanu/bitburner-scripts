@@ -1,4 +1,3 @@
-import { NS } from "@ns";
 import { instanceCount, getFilePath, getNsDataThroughFile, disableLogs, log } from '../helpers.js'
 const scriptSolver = getFilePath("/contracts/contractor-solvers.js");
 
