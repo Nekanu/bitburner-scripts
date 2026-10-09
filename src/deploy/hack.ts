@@ -12,6 +12,9 @@ export function autocomplete(data: AutocompleteData,) {
  * @arg {number} delay
  */
 export async function main(ns: NS) {
-    await ns.sleep(ns.args[2] as number || 0);
-    await ns.weaken(ns.args[0] as string, { threads: ns.args[1] as number, stock: true });
+    const targetHost: string = ns.args[0] as string;
+    const threads: number = ns.args[1] as number;
+    const sleepMilliseconds: number = ns.args[2] as number || 0;
+
+    await ns.hack(targetHost, { threads: threads, stock: true, additionalMsec: sleepMilliseconds });
 }

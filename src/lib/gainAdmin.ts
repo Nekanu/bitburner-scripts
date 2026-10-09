@@ -1,6 +1,9 @@
-import { ITraversalFunction, Traversal, TraversalContext } from "types/traversal";
-import { NS } from "@ns";
-import { purchasePrograms } from "./lib/purchasePrograms";
+import { AutocompleteData, NS } from "@ns";
+import { ITraversalFunction, Traversal, TraversalContext } from "/types/traversal";
+
+export function autocomplete(data: AutocompleteData,) {
+    return [...data.servers];
+}
 
 function countAvailableTools(ns: NS): number {
     let numberOfTools = 0;
@@ -70,37 +73,16 @@ const escalate: ITraversalFunction = (ns: NS, traversalContext: TraversalContext
     args.serversHacked.push([traversalContext.hostname, path]);
 };
 
-/** 
- * @param {NS} ns 
+/**
+ * @param {NS} ns
+ * @arg {string} hostname
  */
 export async function main(ns: NS) {
-    ns.disableLog("ALL");
-    ns.enableLog("singularity.installBackdoor");
+    const hostname = ns.args[0] as string;
+    ns.singularity.connect("home");
 
-    const flags = ns.flags([
-        ['silent', false],
-        ['no-backdoor', false]
-    ]);
-
-    purchasePrograms(ns);
-
-    // Check which port openers are available
     const portOpeners = countAvailableTools(ns);
     const serversHacked: string[] = [];
 
-    new Traversal(escalate, flags["silent"] as boolean, ["w0r1d_d43m0n"]).start(ns, ns.getHostname(), { portOpeners: portOpeners, serversHacked: serversHacked });
-
-    if (!flags["no-backdoor"] as boolean) {
-        let iter: number = 1;
-        for (const [server, path] of serversHacked) {
-            for (const hop of path) {
-                ns.singularity.connect(hop);
-            }
-
-            ns.tprintf(`(${iter}/${serversHacked.length}) - Installing backdoor on ${server}`);
-            await ns.singularity.installBackdoor();
-            ns.singularity.connect("home");
-            iter++;
-        }
-    }
+    new Traversal(escalate, true, ["w0r1d_d43m0n"]).start(ns, ns.getHostname(), { portOpeners: portOpeners, serversHacked: serversHacked });
 }

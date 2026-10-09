@@ -18,7 +18,7 @@ export function main(ns: NS) {
     const growTime = formulasAvailable ? timeToString(ns.formulas.hacking.growTime(ns.getServer(target), ns.getPlayer())) : undefined;
     const hackTime = formulasAvailable ? timeToString(ns.formulas.hacking.hackTime(ns.getServer(target), ns.getPlayer())) : undefined;
 
-    ns.tprintf("%s:\n\tSecurity: %f <- %f\n\tMoney: %s / %s\n ", target, ns.getServerMinSecurityLevel(target), ns.getServerSecurityLevel(target), ns.nFormat(ns.getServerMoneyAvailable(target), "$0.000a"), ns.nFormat(ns.getServerMaxMoney(target), "$0.000a"));
+    ns.tprintf("%s:\n\tSecurity: %f <- %f\n\tMoney: $%s / $%s\n ", target, ns.getServerMinSecurityLevel(target), ns.getServerSecurityLevel(target), ns.format.number(ns.getServerMoneyAvailable(target)), ns.format.number(ns.getServerMaxMoney(target)));
 
     ns.tprintf("Weaken: %d (%s)", calculateWeakenThreads(ns, target), weakenTime ?? "unknown");
     ns.tprintf("Grow: %d (%s)", calculateGrowThreads(ns, target), growTime ?? "unknown");

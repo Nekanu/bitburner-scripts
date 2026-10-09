@@ -1,21 +1,16 @@
 import { factionExclusiveAugmentations, preventingFactions } from "types/factions";
-import { NS } from "@ns";
+import { FactionName, NS } from "@ns";
 
 
 
 export async function main(ns: NS) {
     // Accept faction invitations
-    for (const factionInvite in ns.singularity.checkFactionInvitations()) {
-        if (checkFactionInvite(ns, factionInvite)) {
-            ns.singularity.joinFaction(factionInvite);
-        }
-    }
 
     // Find next augmentations to buy
 
 }
 
-function checkFactionInvite(ns: NS, faction: string): boolean {
+function checkFactionInvite(ns: NS, faction: FactionName): boolean {
 
     // If faction does not block us from joining other factions, we can safely join
     if (!preventingFactions.get(faction)) {

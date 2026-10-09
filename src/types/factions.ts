@@ -1,6 +1,6 @@
-import { FactionWorkType, NS } from "@ns";
+import { FactionName, FactionWorkType, NS } from "@ns";
 
-export const factionExclusiveAugmentations: Map<string, string[]> = new Map([
+export const factionExclusiveAugmentations: Map<FactionName, string[]> = new Map([
     ["Aevum", ["PCMatrix"]],
     ["Chongqing", ["Neuregen Gene Modification"]],
     ["Ishima", ["INFRARET Enhancement"]],
@@ -26,7 +26,7 @@ export const preventingFactions: Map<string, string[]> = new Map([
 ]);
 
 export class FactionWorkStats {
-    faction: string;
+    faction: FactionName;
     donationNeeded: boolean;
     currentFavor: number;
     currentReputation: number;
@@ -36,7 +36,7 @@ export class FactionWorkStats {
     reputationNeeded: number;
     workSecondsNeeded: Map<FactionWorkType, number> = new Map();
 
-    constructor(ns: NS, faction: string) {
+    constructor(ns: NS, faction: FactionName) {
         this.faction = faction;
         this.currentFavor = ns.singularity.getFactionFavor(faction);
         this.currentReputation = ns.singularity.getFactionRep(faction);

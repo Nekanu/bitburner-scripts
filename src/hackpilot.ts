@@ -10,7 +10,7 @@ const growScript = "/lib/grow.js";
 const hackScript = "/lib/hack.js";
 const shareScript = "/lib/share.js";
 
-const persistStatusFile = `${tempFolder}/hackpilot.txt"`;
+const persistStatusFile = `${tempFolder}/hackpilot.json`;
 
 let status = new Map<string, HackStatus>();
 let profitableServers: [string, number][] = [];
@@ -315,8 +315,6 @@ class HackStatus {
 
         if (this.monitorPids.length == 0 && this.threadsNeeded <= 0) {
             const prevAction = this.action;
-
-
 
             this.action = HackStatus.determineAction(ns, this.target);
             this.threadsNeeded = HackStatus.calculateThreadsNeeded(ns, this.target, this.action);

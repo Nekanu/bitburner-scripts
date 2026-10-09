@@ -1,11 +1,12 @@
 import { NS } from "@ns";
 import { Traversal, TraversalContext } from "types/traversal";
-import { findAndExecuteScriptOnServers } from "lib/helpers";
-import { reserveHomeRamGb } from "lib/constants";
+import { findAndExecuteScriptOnServers, getHomeThreadCapacity } from "lib/helpers";
+import { getRamMapping, RamMapping } from "types/ramMapping";
+import { deploymentFolder, reserveHomeRamGb } from "lib/constants";
 
-const weakenScript = "/lib/weaken.js";
-const growScript = "/lib/grow.js";
-const hackScript = "/lib/hack.js";
+const weakenScript = `${deploymentFolder}/weaken.js`;
+const growScript = `${deploymentFolder}/grow.js`;
+const hackScript = `${deploymentFolder}/hack.js`;
 
 // Hacking variables
 const securityThreshold = 0.9; // The percentage of the minimum security level of a server that should be reached before we start hacking it
@@ -76,13 +77,20 @@ export class HackingState {
         return serverHackQueue;
     }
 
-    public update(ns: NS) {
-        this.serverHackQueue.forEach(hack => hack.update(ns));
+    /**
+     * Refreshes every target's state, recomputes and dispatches the next action for
+     * targets that are idle, sharing one live ram mapping across the whole pass. Sharing
+     * the mapping (instead of each target fetching its own) means a target's calculation
+     * and its dispatch always agree, and a target further down the queue sees ram already
+     * claimed by higher-priority targets earlier in this same pass - both of which matter
+     * for the home-cores-aware thread math in calculateWeakenThreads/calculateGrowThreads.
+     */
+    public tick(ns: NS) {
+        this.serverHackQueue.forEach(hack => hack.refresh(ns));
         this.serverHackQueue.sort(profitSortFunction);
-    }
 
-    public performHack(ns: NS) {
-        this.serverHackQueue.forEach(hack => hack.performAction(ns));
+        const ramMapping = getRamMapping(ns, []);
+        this.serverHackQueue.forEach(hack => hack.tick(ns, ramMapping));
     }
 
     public persist(ns: NS, path: string) {
@@ -205,21 +213,24 @@ export class ServerHackStatus {
 
     /**
      * Performs the action specified by this status to best ability
+     *
+     * @param {NS} ns
+     * @param {RamMapping} ramMapping The ram mapping to dispatch against, updated in place
      */
-    public performAction(ns: NS) {
+    public performAction(ns: NS, ramMapping: RamMapping = getRamMapping(ns, [])) {
 
         let newPids: [number, number][] = [];
         switch (this.action) {
             case ServerHackAction.None:
                 return;
             case ServerHackAction.Weaken:
-                newPids = findAndExecuteScriptOnServers(ns, this.target, weakenScript, this.threadsNeeded, reserveHomeRamGb);
+                newPids = findAndExecuteScriptOnServers(ns, this.target, weakenScript, this.threadsNeeded, reserveHomeRamGb, true, ramMapping);
                 break;
             case ServerHackAction.Grow:
-                newPids = findAndExecuteScriptOnServers(ns, this.target, growScript, this.threadsNeeded, reserveHomeRamGb);
+                newPids = findAndExecuteScriptOnServers(ns, this.target, growScript, this.threadsNeeded, reserveHomeRamGb, true, ramMapping);
                 break;
             case ServerHackAction.Hack:
-                newPids = findAndExecuteScriptOnServers(ns, this.target, hackScript, this.threadsNeeded, reserveHomeRamGb);
+                newPids = findAndExecuteScriptOnServers(ns, this.target, hackScript, this.threadsNeeded, reserveHomeRamGb, true, ramMapping);
                 break;
         }
 
@@ -241,18 +252,17 @@ export class ServerHackStatus {
 
     /**
      * Calculates the number of threads needed to perform the specified action on the target server
-     * 
+     *
      * @param {NS} ns
-     * @param {string} target The server to target
-     * @param {ServerHackAction} action The action to perform
+     * @param {RamMapping} ramMapping The ram mapping used for cores-aware weaken/grow thread math
      * @returns {number} The number of threads needed to perform the specified action
      */
-    public calculateThreadsNeeded(ns: NS): number {
+    public calculateThreadsNeeded(ns: NS, ramMapping: RamMapping = getRamMapping(ns, [])): number {
         switch (this.action) {
             case ServerHackAction.Weaken:
-                return calculateWeakenThreads(ns, this.target);
+                return calculateWeakenThreads(ns, this.target, ramMapping);
             case ServerHackAction.Grow:
-                return calculateGrowThreads(ns, this.target);
+                return calculateGrowThreads(ns, this.target, ramMapping);
             case ServerHackAction.Hack:
                 return calculateHackThreads(ns, this.target, hackPercentage);
             default:
@@ -261,28 +271,40 @@ export class ServerHackStatus {
     }
 
     /**
-    * Checks if the specified pids is still running and updates the status accordingly
-    * If all pids are finished, the next status is determined
-    * 
+    * Checks if the specified pids is still running and refreshes the target's money and
+    * security level. Does not recompute or dispatch the next action - see {@link tick}.
+    *
     * @param {NS} ns
     */
-    public update(ns: NS) {
+    public refresh(ns: NS) {
         this.monitorPids = this.monitorPids.filter(pid => ns.isRunning(pid));
 
         this.currentMoney = ns.getServerMoneyAvailable(this.target);
         this.currentSecurityLevel = ns.getServerSecurityLevel(this.target);
+    }
 
+    /**
+     * If idle, determines and calculates the next action, then dispatches it - all against
+     * the same ram mapping, so the amount of threads calculated is the amount actually
+     * dispatched. Call {@link refresh} first.
+     *
+     * @param {NS} ns
+     * @param {RamMapping} ramMapping The ram mapping to calculate and dispatch against, updated in place
+     */
+    public tick(ns: NS, ramMapping: RamMapping) {
         if (this.monitorPids.length == 0 && this.threadsNeeded <= 0) {
             const prevAction = this.action;
 
             this.action = this.determineNextAction(ns);
-            this.threadsNeeded = this.calculateThreadsNeeded(ns);
+            this.threadsNeeded = this.calculateThreadsNeeded(ns, ramMapping);
 
             // Let this hack wait if we are not hacking anymore
             if (prevAction == ServerHackAction.Hack && this.action !== ServerHackAction.Hack) {
                 this.state = ServerHackState.Waiting;
             }
         }
+
+        this.performAction(ns, ramMapping);
     }
 }
 
@@ -301,35 +323,62 @@ export enum ServerHackAction {
 
 
 /**
- * Calculates the number of threads needed to weaken a server to its minimum security level
- * 
+ * Calculates the number of threads needed to weaken a server to its minimum security level.
+ * Accounts for the home server's CPU cores, since findAndExecuteScriptOnServers always fills
+ * home's capacity first before spilling over to (always single-core) other servers.
+ *
  * @param {NS} ns
  * @arg {string} target
  * @returns {number} The number of threads needed to weaken the target server to minimum security level
  */
-function calculateWeakenThreads(ns: NS, target: string): number {
-    let threads = 1;
-    while (ns.weakenAnalyze(threads, 1) < (ns.getServerSecurityLevel(target) - ns.getServerMinSecurityLevel(target))) {
-        threads++;
+function calculateWeakenThreads(ns: NS, target: string, ramMapping: RamMapping = getRamMapping(ns, [])): number {
+    const deficit = ns.getServerSecurityLevel(target) - ns.getServerMinSecurityLevel(target);
+
+    const { threads: homeCapacity, cores: homeCores } = getHomeThreadCapacity(ramMapping, ns, weakenScript, reserveHomeRamGb);
+
+    // Fill up home's capacity first, at home's core count
+    let homeThreads = 0;
+    while (homeThreads < homeCapacity && ns.weakenAnalyze(homeThreads, homeCores) < deficit) {
+        homeThreads++;
     }
 
-    return threads;
+    // If home alone is not enough, continue with single-core threads on other servers
+    const homeReduction = ns.weakenAnalyze(homeThreads, homeCores);
+    let otherThreads = 0;
+    while (homeReduction + ns.weakenAnalyze(otherThreads, 1) < deficit) {
+        otherThreads++;
+    }
+
+    return homeThreads + otherThreads;
 }
 
 /**
  * Calculates the number of threads needed to grow a server to its maximum money level
- * (Becomes unreliable if the server has no money)
- * 
+ * (Becomes unreliable if the server has no money). Accounts for the home server's CPU cores
+ * when home alone can cover the required threads, since findAndExecuteScriptOnServers always
+ * fills home's capacity first before spilling over to (always single-core) other servers.
+ *
  * @param {NS} ns
  * @arg {string} target
  * @returns {number} The number of threads needed to grow the target server to maximum money level
  */
-function calculateGrowThreads(ns: NS, target: string): number {
+function calculateGrowThreads(ns: NS, target: string, ramMapping: RamMapping = getRamMapping(ns, [])): number {
 
     // Use 100 000 as base value if server has no money (to avoid division by zero)
     const targetCurrentMoney = ns.getServerMoneyAvailable(target) == 0 ? 100000 : ns.getServerMoneyAvailable(target);
     const targetMaxMoney = ns.getServerMaxMoney(target);
-    return Math.ceil(ns.growthAnalyze(target, targetMaxMoney / targetCurrentMoney));
+    const multiplier = targetMaxMoney / targetCurrentMoney;
+
+    const { threads: homeCapacity, cores: homeCores } = getHomeThreadCapacity(ramMapping, ns, growScript, reserveHomeRamGb);
+
+    const threadsIfAllHome = Math.ceil(ns.growthAnalyze(target, multiplier, homeCores));
+    if (threadsIfAllHome <= homeCapacity) {
+        // All threads will actually run on home, so this is exact
+        return threadsIfAllHome;
+    }
+
+    // Home alone can't cover it; fall back to the conservative single-core estimate
+    return Math.ceil(ns.growthAnalyze(target, multiplier));
 }
 
 /**

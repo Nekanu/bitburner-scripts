@@ -1,39 +1,29 @@
 import { CrimeType, NS, WorkStats } from "@ns";
 
 const CrimeTimesSeconds: Map<CrimeType, number> = new Map([
-    [CrimeType.shoplift, 2],
-    [CrimeType.robStore, 60],
-    [CrimeType.mug, 4],
-    [CrimeType.larceny, 90],
-    [CrimeType.dealDrugs, 10],
-    [CrimeType.bondForgery, 300],
-    [CrimeType.traffickArms, 40],
-    [CrimeType.homicide, 3],
-    [CrimeType.grandTheftAuto, 80],
-    [CrimeType.kidnap, 120],
-    [CrimeType.assassination, 300],
-    [CrimeType.heist, 600],
+    ["Shoplift", 2],
+    ["Rob Store", 60],
+    ["Mug", 4],
+    ["Larceny", 90],
+    ["Deal Drugs", 10],
+    ["Bond Forgery", 300],
+    ["Traffick Arms", 40],
+    ["Homicide", 3],
+    ["Grand Theft Auto", 80],
+    ["Kidnap", 120],
+    ["Assassination", 300],
+    ["Heist", 600],
 ]);
 
 async function main(ns: NS) {
     ns.disableLog("ALL");
 
     const player = ns.getPlayer();
-
 }
 
 async function getMostProfitableWork(ns: NS) {
     const player = ns.getPlayer();
     const formulas = ns.formulas.work;
-
-    for (const crime of Object.values(CrimeType)) {
-        const duration = CrimeTimesSeconds.get(crime);
-        if (duration === undefined) continue;
-        const work: WorkStats = formulas.crimeGains(player, crime);
-        const successRate = formulas.crimeSuccessChance(player, crime);
-
-
-    }
 
     for (const faction of player.factions) {
         for (const workType of Object.values(ns.enums.FactionWorkType)) {

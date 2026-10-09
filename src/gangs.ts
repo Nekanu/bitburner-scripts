@@ -1,12 +1,19 @@
 import { NS } from "@ns";
+import { gangMoneyMaxPart } from "./lib/constants";
 
 export async function main(ns: NS) {
     ns.disableLog("ALL");
-
     await initialize(ns);
+    await buyEquipment(ns);
 
+    return;
 
+    while (true) {
+        await recruitMembers(ns);
+        await assignTasks(ns);
 
+        await ns.sleep(5000);
+    }
 }
 
 async function initialize(ns: NS) {
@@ -16,10 +23,15 @@ async function initialize(ns: NS) {
     }
 }
 
+async function buyEquipment(ns: NS) {
+    const moneyAvailable = ns.getPlayer().money * gangMoneyMaxPart;
+}
+
 async function assignTasks(ns: NS) {
 
     const gangInfo = ns.gang.getGangInformation();
     const members = ns.gang.getMemberNames().sort((a, b) => getMemberAverageCombatStat(ns, b) - getMemberAverageCombatStat(ns, a));
+    //const memberTasks: Map<string, string> = {};
 
     for (const member of members) {
         const memberInfo = ns.gang.getMemberInformation(member);
@@ -35,6 +47,9 @@ async function assignTasks(ns: NS) {
             ns.gang.setMemberTask(member, suggestedTask);
         }
     }
+
+    const task = ns.gang.getTaskStats("Mug People");
+    ns.alert(task);
 }
 
 async function recruitMembers(ns: NS) {

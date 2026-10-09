@@ -2,11 +2,10 @@ import { NS } from "@ns";
 import { getRamMapping } from "types/ramMapping";
 import { HackingState } from "types/hacking";
 import { findAndExecuteScriptOnServers } from "lib/helpers";
-import { reserveHomeRamGb, tempFolder } from "lib/constants";
+import { deploymentFolder, reserveHomeRamGb, tempFolder } from "lib/constants";
 
-const shareScript = "/lib/share.js";
-
-const persistStatusFile = `${tempFolder}/hackingpilot.txt`;
+const shareScript = `${deploymentFolder}/share.js`;
+const persistStatusFile = `${tempFolder}/hackingpilot.json`;
 
 let state: HackingState;
 
@@ -50,10 +49,8 @@ export async function main(ns: NS) {
             ns.exec("escalate.js", "home", 1);
         }
 
-        // Monitor the servers
-        state.update(ns);
-
-        state.performHack(ns);
+        // Monitor the servers, and recompute/dispatch actions for idle ones
+        state.tick(ns);
 
         // Persist new status
         state.persist(ns, persistStatusFile);

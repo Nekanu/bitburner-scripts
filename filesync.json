@@ -1,7 +1,9 @@
 {
   "allowedFiletypes": [
     ".js",
-    ".script",
+    ".ts",
+    ".jsx",
+    ".tsx",
     ".txt"
   ],
   "allowDeletingFiles": true,
